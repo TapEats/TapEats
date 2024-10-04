@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tapeats/presentation/screens/login_page.dart';
 
 class SwipeButtonSplashScreen extends StatefulWidget {
   const SwipeButtonSplashScreen({super.key});
@@ -41,6 +42,15 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
       setState(() {
         _isCompleted = true;
       });
+
+      // Navigate to Login Page after swipe completion
+      Future.delayed(const Duration(milliseconds: 200), () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const LoginPage()), // Navigate to LoginPage
+        );
+      });
     }
   }
 
@@ -67,7 +77,7 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
           onHorizontalDragEnd: (details) {
             // Complete the swipe if dragged more than 50%
             if (_controller.value > 0.5) {
-              _onSwipeRight();
+              _onSwipeRight(); // Call swipe completion function
             } else {
               // Otherwise, revert back to the starting position
               _controller.reverse();
