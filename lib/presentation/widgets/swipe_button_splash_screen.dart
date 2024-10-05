@@ -48,7 +48,7 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-              builder: (context) => const LoginPage()), // Navigate to LoginPage
+              builder: (context) => LoginPage()), // Navigate to LoginPage
         );
       });
     }
@@ -100,7 +100,7 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
                       borderRadius: BorderRadius.circular(50),
                       border: Border.all(
                           color: const Color(0xFFD0F0C0),
-                          width: 3), // Heavier stroke
+                          width: 4), // Heavier stroke
                       color: _rectBackgroundAnimation
                           .value, // Dynamic background color
                     ),
@@ -133,6 +133,8 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
                         color: const Color(
                             0xFFD0F0C0), // Static color for the button itself
                         borderRadius: BorderRadius.circular(30),
+                        boxShadow: const [BoxShadow(blurRadius:20,
+                          color: Color.fromARGB(102, 98, 98, 98)),],
                       ),
                       alignment: Alignment.center,
                       child: const Text(
@@ -141,6 +143,8 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
                           fontFamily: 'Helvetica Neue',
                           color: Color(0xFFEEEFEF), // Light arrow color
                           fontSize: 24,
+                          shadows: [Shadow(blurRadius:20,
+                          color: Color.fromARGB(255, 98, 98, 98)),],
                         ),
                       ),
                     ),

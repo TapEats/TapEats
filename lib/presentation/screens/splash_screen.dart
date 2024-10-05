@@ -40,17 +40,6 @@ class SplashScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Aahar Line (Sanskrit)
-          Positioned(
-            // Adjust so it's below the frame and visible
-            left: 40,
-            child: Center(
-              child: Image.asset(
-                'assets/images/aahar_line.png', // Adjust width as needed
-                height: screenHeight * 1.0,
-              ),
-            ),
-          ),
           // Dots on bottom right
           Positioned(
             bottom: 0, // Adjust the bottom position as needed
