@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tapeats/presentation/screens/home_page.dart';
 import 'package:tapeats/presentation/screens/login_page.dart';
 
 class SwipeButtonSplashScreen extends StatefulWidget {
@@ -48,7 +49,7 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-              builder: (context) => LoginPage()), // Navigate to LoginPage
+              builder: (context) => const HomePage()), // Navigate to LoginPage
         );
       });
     }
