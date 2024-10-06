@@ -1,28 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
 
+// AddButton Widget
 class AddButton extends StatelessWidget {
   final VoidCallback onPressed;
 
-  const AddButton({required this.onPressed, super.key});
+  const AddButton({super.key, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFD0F0C0),  // Highlight button color
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),  // Custom padding
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
+      onTap: onPressed,  // This triggers the add-to-cart logic
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        decoration: BoxDecoration(
+          color: const Color(0xFFD0F0C0),
+          borderRadius: BorderRadius.circular(6),
         ),
-      ),
-      child: const Text(
-        'Add',
-        style: TextStyle(
-          color: Color(0xFF151611),  // Contrasting text color
-          fontWeight: FontWeight.bold,
+        child: const Row(
+          children: [
+            SizedBox(width: 4),
+            Text('Add', style: TextStyle(color: Color(0xFF151611))),
+            SizedBox(width: 2),
+            Icon(Icons.add, color: Color(0xFF151611)),
+          ],
         ),
       ),
     );
   }
 }
+
+
+
