@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:tapeats/presentation/screens/menu_page.dart';
 
 class CustomFooter extends StatefulWidget {
   const CustomFooter({super.key});
@@ -15,13 +16,20 @@ class _CustomFooterState extends State<CustomFooter> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+
+      // Navigate to the MenuPage when the Menu icon is pressed (index 1)
+      if (index == 1) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MenuPage()),
+        );
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return 
-    Container(
+    return Container(
       height: 70, // Slightly reduced height
       decoration: const BoxDecoration(
         color: Color(0xFF222222),
@@ -51,31 +59,28 @@ class _CustomFooterState extends State<CustomFooter> {
   }
 
   // Custom widget to add the triangle behind the selected icon using an image
-Widget _buildInverseTriangle(int index) {
-  return AnimatedAlign(
-    alignment: Alignment((index * 2 - 3) * 0.29, -5),  // Smooth alignment change based on index
-    duration: const Duration(milliseconds: 300),  // Smooth transition duration
-    curve: Curves.easeInOut,  // Easing curve for smoothness
-    child: AnimatedScale(
-      scale: 1.4,  // Keep the scaling for larger size
-      duration: const Duration(milliseconds: 300),  // Smooth scale animation duration
-      curve: Curves.easeInOut,  // Same curve for smooth scaling
-      child: ClipRect(
-        child: SizedBox(
-          width: 60,  // Keep the original width and height
-          height: 40,
-          child: Image.asset(
-            'assets/images/invtriangle.png',  // Path to the triangle image
-            fit: BoxFit.cover,  // Ensure it covers the clipped area
+  Widget _buildInverseTriangle(int index) {
+    return AnimatedAlign(
+      alignment: Alignment((index * 2 - 3) * 0.29, -5),  // Smooth alignment change based on index
+      duration: const Duration(milliseconds: 300),  // Smooth transition duration
+      curve: Curves.easeInOut,  // Easing curve for smoothness
+      child: AnimatedScale(
+        scale: 1.4,  // Keep the scaling for larger size
+        duration: const Duration(milliseconds: 300),  // Smooth scale animation duration
+        curve: Curves.easeInOut,  // Same curve for smooth scaling
+        child: ClipRect(
+          child: SizedBox(
+            width: 60,  // Keep the original width and height
+            height: 40,
+            child: Image.asset(
+              'assets/images/invtriangle.png',  // Path to the triangle image
+              fit: BoxFit.cover,  // Ensure it covers the clipped area
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
-
-
-
+    );
+  }
 
   // Build individual navigation items
   Widget _buildNavItem(IconData iconData, int index) {
