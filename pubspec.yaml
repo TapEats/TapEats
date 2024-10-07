@@ -75,6 +75,7 @@ flutter:
     - assets/images/sendgreen.png
     - assets/images/invtriangle.png
     - assets/images/macaroon_1.png
+    - assets/images/cupcake.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
 

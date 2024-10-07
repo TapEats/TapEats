@@ -9,6 +9,7 @@ import 'package:tapeats/presentation/widgets/footer_widget.dart';
 import 'package:tapeats/presentation/widgets/minus_button.dart';
 import 'package:tapeats/presentation/widgets/plus_button.dart';
 import 'package:tapeats/presentation/widgets/search_bar.dart';
+import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
 
 class HomePage extends StatefulWidget {
@@ -100,6 +101,16 @@ void _removeItemFromCart(String itemName) {
   });
 }
 
+void _openSideMenu() {
+  Navigator.of(context).push(
+    PageRouteBuilder(
+      opaque: false,  // Keep the background semi-transparent
+      pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+    ),
+  );
+}
+
+
 
 
   @override
@@ -116,8 +127,8 @@ void _removeItemFromCart(String itemName) {
               onLeftButtonPressed: () {},
               headingText: 'Vadodara',
               headingIcon: Iconsax.location,
-              rightIcon: Iconsax.menu,
-              onRightButtonPressed: () {},
+              rightIcon: Iconsax.menu_1,
+              onRightButtonPressed: _openSideMenu,
             ),
             const SizedBox(height: 20),
             // "Fuel Your Flavor Adventure" Text with Image of Macarons
