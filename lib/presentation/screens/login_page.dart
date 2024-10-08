@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tapeats/presentation/screens/otp_verification_page.dart';
-import 'package:tapeats/services/otp_service.dart'; // Import the OTP service
+import 'package:tapeats/services/otp_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends StatelessWidget {
@@ -117,13 +117,15 @@ class LoginPage extends StatelessWidget {
                 onPressed: () async {
                   String phoneNumber = _phoneController.text.trim();
                   if (phoneNumber.isNotEmpty) {
-                    String formattedPhoneNumber = _formatPhoneNumber(phoneNumber);  // Add +91 prefix if needed
+                    String formattedPhoneNumber = _formatPhoneNumber(
+                        phoneNumber); // Add +91 prefix if needed
                     try {
                       await _otpService.sendOtp(formattedPhoneNumber);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => OtpVerificationPage(phoneNumber: formattedPhoneNumber),
+                          builder: (context) => OtpVerificationPage(
+                              phoneNumber: formattedPhoneNumber),
                         ),
                       );
                     } catch (e) {

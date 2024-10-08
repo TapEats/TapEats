@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tapeats/presentation/screens/home_page.dart';
+import 'package:tapeats/presentation/screens/user_side/home_page.dart';
 import 'package:tapeats/presentation/screens/login_page.dart';
 
 class SwipeButtonSplashScreen extends StatefulWidget {
@@ -134,8 +134,11 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
                         color: const Color(
                             0xFFD0F0C0), // Static color for the button itself
                         borderRadius: BorderRadius.circular(30),
-                        boxShadow: const [BoxShadow(blurRadius:20,
-                          color: Color.fromARGB(102, 98, 98, 98)),],
+                        boxShadow: const [
+                          BoxShadow(
+                              blurRadius: 20,
+                              color: Color.fromARGB(102, 98, 98, 98)),
+                        ],
                       ),
                       alignment: Alignment.center,
                       child: const Text(
@@ -144,8 +147,11 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
                           fontFamily: 'Helvetica Neue',
                           color: Color(0xFFEEEFEF), // Light arrow color
                           fontSize: 24,
-                          shadows: [Shadow(blurRadius:20,
-                          color: Color.fromARGB(255, 98, 98, 98)),],
+                          shadows: [
+                            Shadow(
+                                blurRadius: 20,
+                                color: Color.fromARGB(255, 98, 98, 98)),
+                          ],
                         ),
                       ),
                     ),
