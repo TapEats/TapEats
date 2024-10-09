@@ -10,7 +10,8 @@ import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
 
 class FavouritesPage extends StatefulWidget {
-  const FavouritesPage({super.key});
+  final int selectedIndex;
+  const FavouritesPage({super.key, required this.selectedIndex});
 
   @override
   State<FavouritesPage> createState() => _FavouritesPageState();
@@ -65,6 +66,15 @@ class _FavouritesPageState extends State<FavouritesPage> {
     });
   }
 
+    void _openSideMenu() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false, // Keep the background semi-transparent
+        pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,14 +90,7 @@ class _FavouritesPageState extends State<FavouritesPage> {
               headingText: 'Favourites',
               headingIcon: Iconsax.heart,
               rightIcon: Iconsax.menu_1,
-              onRightButtonPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SideMenuOverlay(),
-                  ),
-                );
-              },
+              onRightButtonPressed: _openSideMenu,
             ),
             const SizedBox(height: 20),
 
@@ -106,12 +109,10 @@ class _FavouritesPageState extends State<FavouritesPage> {
                 ),
               ),
             const SizedBox(height: 20),
-
-            // Footer widget at the bottom
-            const CustomFooter(),
           ],
         ),
       ),
+      bottomNavigationBar: Hero(tag: 'footerHero',child: CustomFooter(selectedIndex: widget.selectedIndex)),
     );
   }
 

@@ -1,36 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:tapeats/presentation/widgets/swipe_button_splash_screen.dart';
 
-class SplashScreen extends StatelessWidget {
-  const SplashScreen({super.key});
+class SplashScreen extends StatefulWidget {
+  final int selectedIndex; // Add selectedIndex parameter
 
+  const SplashScreen({super.key, required this.selectedIndex});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: Stack(
         children: [
-          // Background image (Main food bowl)
           Positioned.fill(
             child: Image.asset(
               'assets/images/splashscreenfoodbowl.png',
               fit: BoxFit.cover,
             ),
           ),
-          // Title (TapEats)
           Positioned(
-            top: 150, // Adjusted for better positioning
+            top: 150, 
             left: 0,
             right: 0,
             child: Center(
               child: Image.asset(
                 'assets/images/TapEats_title.png',
-                width: 250, // Adjust as needed
+                width: 250, 
               ),
             ),
           ),
-          // Double Frame
           Positioned(
             child: Center(
               child: Image.asset(
@@ -40,22 +45,21 @@ class SplashScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Dots on bottom right
           Positioned(
-            bottom: 0, // Adjust the bottom position as needed
-            right: -20, // Adjust the right position as needed
+            bottom: 0, 
+            right: -20, 
             child: Image.asset(
               'assets/images/dots.png',
-              width: 200, // Adjust the size as needed
-              height: 200, // Adjust the height as needed
+              width: 200, 
+              height: 200, 
             ),
           ),
-          // Swipe Button Splash Screen (Animated)
-          const Positioned(
+          Positioned(
             left: 75,
             right: 75,
             bottom: 200,
-            child: SwipeButtonSplashScreen(), // Your custom swipe button
+            // Access widget.selectedIndex correctly in StatefulWidget
+            child: SwipeButtonSplashScreen(selectedIndex: widget.selectedIndex), 
           ),
         ],
       ),

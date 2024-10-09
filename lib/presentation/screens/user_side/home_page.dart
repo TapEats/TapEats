@@ -13,8 +13,8 @@ import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
+  final int selectedIndex;
+  const HomePage({super.key, required this.selectedIndex});
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -102,6 +102,9 @@ void _removeItemFromCart(String itemName) {
 }
 
 void _openSideMenu() {
+  setState(() {
+    
+  });
   Navigator.of(context).push(
     PageRouteBuilder(
       opaque: false,  // Keep the background semi-transparent
@@ -109,9 +112,6 @@ void _openSideMenu() {
     ),
   );
 }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -172,11 +172,11 @@ if (totalItems > 0)
 
 
 const SizedBox(height: 20),
-            // Footer widget at the bottom
-            const CustomFooter(),
+
           ],
         ),
       ),
+      bottomNavigationBar: Hero(tag: 'footerHero',child: CustomFooter(selectedIndex: widget.selectedIndex)),
     );
   }
 

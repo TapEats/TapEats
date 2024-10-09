@@ -12,7 +12,8 @@ import 'package:tapeats/presentation/widgets/slider_button.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 
 class MenuPage extends StatefulWidget {
-  const MenuPage({super.key});
+  final int selectedIndex;
+  const MenuPage({super.key, required this.selectedIndex});
 
   @override
   State<MenuPage> createState() => _MenuPageState();
@@ -152,12 +153,10 @@ class _MenuPageState extends State<MenuPage> {
                 ),
               ),
             const SizedBox(height: 20),
-
-            // Footer widget at the bottom
-            const CustomFooter(),
           ],
         ),
       ),
+      bottomNavigationBar: Hero(tag: 'footerHero',child: CustomFooter(selectedIndex: widget.selectedIndex)),
     );
   }
 

@@ -3,7 +3,8 @@ import 'package:tapeats/presentation/screens/user_side/home_page.dart';
 import 'package:tapeats/presentation/screens/login_page.dart';
 
 class SwipeButtonSplashScreen extends StatefulWidget {
-  const SwipeButtonSplashScreen({super.key});
+  final int selectedIndex;
+  const SwipeButtonSplashScreen({super.key, required this.selectedIndex});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -49,7 +50,7 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-              builder: (context) => const HomePage()), // Navigate to LoginPage
+              builder: (context) => HomePage(selectedIndex: widget.selectedIndex)), // Navigate to LoginPage
         );
       });
     }
