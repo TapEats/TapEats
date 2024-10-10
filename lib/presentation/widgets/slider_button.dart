@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class SliderButton extends StatefulWidget {
   final String labelText;
   final String subText;
+  final VoidCallback onSlideComplete; // Add this parameter for the callback
 
   const SliderButton({
     super.key,
     required this.labelText,
     required this.subText,
+    required this.onSlideComplete, // Required callback
   });
 
   @override
@@ -25,21 +27,16 @@ class _SliderButtonState extends State<SliderButton> {
 
   @override
   Widget build(BuildContext context) {
-    // Screen dimensions
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
 
-    // Responsive dimensions
-    double sliderWidth = screenWidth * 0.8; // 80% of screen width
-    double sliderHeight = screenHeight * 0.07; // 7% of screen height
+    double sliderWidth = screenWidth * 0.8;
+    double sliderHeight = screenHeight * 0.07;
     double sliderRadius = sliderHeight / 2;
-
-    double sidePadding = sliderHeight * 0.1; // 10% of slider height as padding
-    double verticalPadding = sidePadding; // Equal vertical padding
-
-    double buttonHeight = sliderHeight - 2 * verticalPadding; // Adjusted button height
-    double buttonWidth = sliderWidth * 0.25; // Button width is 25% of slider width
-
+    double sidePadding = sliderHeight * 0.1;
+    double verticalPadding = sidePadding;
+    double buttonHeight = sliderHeight - 2 * verticalPadding;
+    double buttonWidth = sliderWidth * 0.25;
     double maxDragPosition = sliderWidth - (buttonWidth - (4 * sidePadding));
 
     return GestureDetector(
@@ -49,16 +46,16 @@ class _SliderButtonState extends State<SliderButton> {
         double localX = localPosition.dx;
 
         setState(() {
-          // Update drag position based on touch position and padding
-          _dragPosition = (localX - buttonWidth / 2 - sidePadding).clamp(0.0, maxDragPosition);
+          _dragPosition = (localX - buttonWidth / 2 - sidePadding)
+              .clamp(0.0, maxDragPosition);
 
-          // If dragged to the end, mark it as completed and update colors
           if (_dragPosition >= maxDragPosition) {
             if (!isCompleted) {
               isCompleted = true;
               _updateColorsOnComplete();
-              // Ensure button snaps to the exact end position
               _dragPosition = maxDragPosition;
+              widget
+                  .onSlideComplete(); // Trigger the callback when slide completes
             }
           } else {
             if (isCompleted) {
@@ -71,13 +68,7 @@ class _SliderButtonState extends State<SliderButton> {
       onPanEnd: (_) {
         if (!isCompleted) {
           setState(() {
-            // Animate the button back to the start position
             _dragPosition = 0;
-          });
-        } else {
-          setState(() {
-            // Ensure button is at the end position
-            _dragPosition = maxDragPosition;
           });
         }
       },
@@ -99,7 +90,6 @@ class _SliderButtonState extends State<SliderButton> {
         ),
         child: Stack(
           children: [
-            // Positioned Button
             AnimatedPositioned(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOut,
@@ -127,7 +117,6 @@ class _SliderButtonState extends State<SliderButton> {
                 ),
               ),
             ),
-            // Centered Text with Padding
             Padding(
               padding: EdgeInsets.symmetric(horizontal: sidePadding),
               child: Center(
@@ -144,7 +133,7 @@ class _SliderButtonState extends State<SliderButton> {
                       ),
                       child: Text(widget.labelText),
                     ),
-                    const SizedBox(height: 5), // Small space between texts
+                    const SizedBox(height: 5),
                     AnimatedDefaultTextStyle(
                       duration: const Duration(milliseconds: 300),
                       style: TextStyle(
@@ -166,10 +155,10 @@ class _SliderButtonState extends State<SliderButton> {
   }
 
   void _updateColorsOnComplete() {
-    _boxBackgroundColor = const Color(0xFFD0F0C0); // Box turns to D0F0C0
-    _buttonBackgroundColor = const Color(0xFF222222); // Button turns to #222222
-    _textColor = const Color(0xFF222222); // Text color changes
-    _buttonIcon = 'assets/images/sendgreen.png'; // Icon changes to green
+    _boxBackgroundColor = const Color(0xFFD0F0C0);
+    _buttonBackgroundColor = const Color(0xFF222222);
+    _textColor = const Color(0xFF222222);
+    _buttonIcon = 'assets/images/sendgreen.png';
   }
 
   void _resetColors() {

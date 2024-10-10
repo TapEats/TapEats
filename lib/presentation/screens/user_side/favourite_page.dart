@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
 import 'package:tapeats/presentation/widgets/add_button.dart';
 import 'package:tapeats/presentation/widgets/footer_widget.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
@@ -66,11 +67,23 @@ class _FavouritesPageState extends State<FavouritesPage> {
     });
   }
 
-    void _openSideMenu() {
+  void _openSideMenu() {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false, // Keep the background semi-transparent
         pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+      ),
+    );
+  }
+
+  void _onSlideToCheckout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CartPage(
+          cartItems: cartItems,
+          totalItems: totalItems,
+        ),
       ),
     );
   }
@@ -104,15 +117,17 @@ class _FavouritesPageState extends State<FavouritesPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: SliderButton(
                   labelText: 'Cart',
-                  subText:
-                      '$totalItems items', // Show the total item count in the cart
+                  subText: '$totalItems items',
+                  onSlideComplete: _onSlideToCheckout,
                 ),
               ),
             const SizedBox(height: 20),
           ],
         ),
       ),
-      bottomNavigationBar: Hero(tag: 'footerHero',child: CustomFooter(selectedIndex: widget.selectedIndex)),
+      bottomNavigationBar: Hero(
+          tag: 'footerHero',
+          child: CustomFooter(selectedIndex: widget.selectedIndex)),
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
 import 'package:tapeats/presentation/widgets/add_button.dart';
 import 'package:tapeats/presentation/widgets/footer_widget.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
@@ -21,7 +22,8 @@ class MenuPage extends StatefulWidget {
 
 class _MenuPageState extends State<MenuPage> {
   final SupabaseClient supabase = Supabase.instance.client;
-  Map<String, int> cartItems = {}; // This will store item names and their quantities
+  Map<String, int> cartItems =
+      {}; // This will store item names and their quantities
   int totalItems = 0; // Total number of items in the cart
   final TextEditingController _searchController = TextEditingController();
   String searchQuery = ''; // Stores the search input
@@ -37,9 +39,8 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   Future<void> _fetchMenuData() async {
-    final response = await supabase
-        .from('menu')
-        .select('name, price, category, rating, cooking_time, image_url'); // Ensure the image_url is fetched
+    final response = await supabase.from('menu').select(
+        'name, price, category, rating, cooking_time, image_url'); // Ensure the image_url is fetched
 
     if (response.isNotEmpty) {
       Set<String> uniqueCategories = {};
@@ -59,7 +60,9 @@ class _MenuPageState extends State<MenuPage> {
 
   void _selectCategory(String category) {
     setState(() {
-      selectedCategory = selectedCategory == category ? '' : category; // Toggle category selection
+      selectedCategory = selectedCategory == category
+          ? ''
+          : category; // Toggle category selection
     });
   }
 
@@ -97,6 +100,18 @@ class _MenuPageState extends State<MenuPage> {
       PageRouteBuilder(
         opaque: false, // Keep the background semi-transparent
         pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+      ),
+    );
+  }
+
+  void _onSlideToCheckout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CartPage(
+          cartItems: cartItems,
+          totalItems: totalItems,
+        ),
       ),
     );
   }
@@ -149,14 +164,17 @@ class _MenuPageState extends State<MenuPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: SliderButton(
                   labelText: 'Cart',
-                  subText: '$totalItems items', // Show the total item count in the cart
+                  subText: '$totalItems items',
+                  onSlideComplete: _onSlideToCheckout,
                 ),
               ),
             const SizedBox(height: 20),
           ],
         ),
       ),
-      bottomNavigationBar: Hero(tag: 'footerHero',child: CustomFooter(selectedIndex: widget.selectedIndex)),
+      bottomNavigationBar: Hero(
+          tag: 'footerHero',
+          child: CustomFooter(selectedIndex: widget.selectedIndex)),
     );
   }
 
@@ -170,17 +188,23 @@ class _MenuPageState extends State<MenuPage> {
           Padding(
             padding: const EdgeInsets.only(right: 10.0),
             child: GestureDetector(
-              onTap: () => _selectCategory(''), // Empty string represents all categories
+              onTap: () =>
+                  _selectCategory(''), // Empty string represents all categories
               child: Container(
                 decoration: BoxDecoration(
-                  color: selectedCategory.isEmpty ? const Color(0xFF222222) : const Color(0xFF1A1A1A),
+                  color: selectedCategory.isEmpty
+                      ? const Color(0xFF222222)
+                      : const Color(0xFF1A1A1A),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                 child: Text(
                   'All',
                   style: TextStyle(
-                    color: selectedCategory.isEmpty ? const Color(0xFFD0F0C0) : const Color(0xFFEEEFEF),
+                    color: selectedCategory.isEmpty
+                        ? const Color(0xFFD0F0C0)
+                        : const Color(0xFFEEEFEF),
                     fontFamily: 'Helvetica Neue',
                     fontSize: 16,
                   ),
@@ -196,14 +220,19 @@ class _MenuPageState extends State<MenuPage> {
                 onTap: () => _selectCategory(category),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF222222) : const Color(0xFF1A1A1A),
+                    color: isSelected
+                        ? const Color(0xFF222222)
+                        : const Color(0xFF1A1A1A),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 6.0),
                   child: Text(
                     category,
                     style: TextStyle(
-                      color: isSelected ? const Color(0xFFD0F0C0) : const Color(0xFFEEEFEF),
+                      color: isSelected
+                          ? const Color(0xFFD0F0C0)
+                          : const Color(0xFFEEEFEF),
                       fontFamily: 'Helvetica Neue',
                       fontSize: 16,
                     ),
@@ -219,8 +248,10 @@ class _MenuPageState extends State<MenuPage> {
 
   Widget _buildMenuItems() {
     final filteredMenuItems = menuItems.where((item) {
-      return (selectedCategory.isEmpty || item['category'] == selectedCategory) &&
-          (searchQuery.isEmpty || item['name'].toLowerCase().contains(searchQuery.toLowerCase()));
+      return (selectedCategory.isEmpty ||
+              item['category'] == selectedCategory) &&
+          (searchQuery.isEmpty ||
+              item['name'].toLowerCase().contains(searchQuery.toLowerCase()));
     }).toList();
 
     return Expanded(
@@ -255,7 +286,8 @@ class _MenuPageState extends State<MenuPage> {
                       children: [
                         Text(
                           item['name'],
-                          style: const TextStyle(color: Color(0xFFEEEFEF), fontSize: 18),
+                          style: const TextStyle(
+                              color: Color(0xFFEEEFEF), fontSize: 18),
                         ),
                         const SizedBox(height: 5),
                         Row(
@@ -263,26 +295,36 @@ class _MenuPageState extends State<MenuPage> {
                           children: [
                             Text(
                               '\$${item['price'].toStringAsFixed(2)}',
-                              style: const TextStyle(color: Color(0xFFD0F0C0), fontSize: 16),
+                              style: const TextStyle(
+                                  color: Color(0xFFD0F0C0), fontSize: 16),
                             ),
-                            cartItems.containsKey(item['name']) && cartItems[item['name']]! > 0
+                            cartItems.containsKey(item['name']) &&
+                                    cartItems[item['name']]! > 0
                                 ? Row(
                                     children: [
-                                      MinusButton(onPressed: () => _removeItemFromCart(item['name'])),
+                                      MinusButton(
+                                          onPressed: () => _removeItemFromCart(
+                                              item['name'])),
                                       const SizedBox(width: 5),
                                       Text(
                                         '${cartItems[item['name']]}',
-                                        style: const TextStyle(color: Color(0xFFD0F0C0)),
+                                        style: const TextStyle(
+                                            color: Color(0xFFD0F0C0)),
                                       ),
                                       const SizedBox(width: 5),
-                                      PlusButton(onPressed: () => _addItemToCart(item['name'])),
+                                      PlusButton(
+                                          onPressed: () =>
+                                              _addItemToCart(item['name'])),
                                     ],
                                   )
-                                : AddButton(onPressed: () => _addItemToCart(item['name'])),
+                                : AddButton(
+                                    onPressed: () =>
+                                        _addItemToCart(item['name'])),
                           ],
                         ),
                         const SizedBox(height: 10),
-                        _buildRatingAndTime(item['rating'] ?? 0.0, item['cooking_time'] ?? '0'),
+                        _buildRatingAndTime(
+                            item['rating'] ?? 0.0, item['cooking_time'] ?? '0'),
                       ],
                     ),
                   ),
