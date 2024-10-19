@@ -26,13 +26,13 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
           Positioned(
-            top: 150, 
+            top: 150,
             left: 0,
             right: 0,
             child: Center(
               child: Image.asset(
                 'assets/images/TapEats_title.png',
-                width: 250, 
+                width: 250,
               ),
             ),
           ),
@@ -46,20 +46,19 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
           Positioned(
-            bottom: 0, 
-            right: -20, 
+            bottom: 0,
+            right: -20,
             child: Image.asset(
               'assets/images/dots.png',
-              width: 200, 
-              height: 200, 
+              width: 200,
+              height: 200,
             ),
           ),
           Positioned(
             left: 75,
             right: 75,
             bottom: 200,
-            // Access widget.selectedIndex correctly in StatefulWidget
-            child: SwipeButtonSplashScreen(selectedIndex: widget.selectedIndex), 
+            child: SwipeButtonSplashScreen(selectedIndex: widget.selectedIndex),
           ),
         ],
       ),

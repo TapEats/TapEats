@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:tapeats/presentation/screens/user_side/home_page.dart';
 import 'dart:async'; // For the Timer functionality
 import 'package:tapeats/services/otp_service.dart'; // Import the OTP service
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OtpVerificationPage extends StatefulWidget {
   final String phoneNumber;
-
+  final int selectedIndex = 0;
   const OtpVerificationPage({super.key, required this.phoneNumber});
 
   @override
-  _OtpVerificationPageState createState() => _OtpVerificationPageState();
+  State<OtpVerificationPage> createState() => _OtpVerificationPageState();
 }
 
 class _OtpVerificationPageState extends State<OtpVerificationPage> {
@@ -58,16 +59,23 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
   }
 
   // Logic to handle OTP verification
-  Future<void> verifyOtp() async {
-    String otp = '${otpController1.text}${otpController2.text}${otpController3.text}${otpController4.text}';
-    try {
-      await _otpService.verifyOtp(widget.phoneNumber, otp);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OTP verified successfully')));
-    } catch (e) {
-      print('Error verifying OTP: $e');
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to verify OTP')));
-    }
+Future<void> verifyOtp() async {
+  String otp = '${otpController1.text}${otpController2.text}${otpController3.text}${otpController4.text}';
+  try {
+    await _otpService.verifyOtp(widget.phoneNumber, otp);
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OTP verified successfully')));
+
+    // Navigate to the HomePage after successful verification
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => HomePage(selectedIndex: widget.selectedIndex,)), // Replace with your HomePage widget
+    );
+  } catch (e) {
+    print('Error verifying OTP: $e');
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to verify OTP')));
   }
+}
+
 
   // Logic for handling resend OTP
   Future<void> resendOtp() async {
