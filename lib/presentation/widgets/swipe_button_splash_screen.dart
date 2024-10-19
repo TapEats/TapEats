@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tapeats/presentation/screens/user_side/home_page.dart';
-import 'package:tapeats/presentation/screens/login_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_home_page.dart';
 
 class SwipeButtonSplashScreen extends StatefulWidget {
   final int selectedIndex;
@@ -50,7 +49,9 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-              builder: (context) => HomePage(selectedIndex: widget.selectedIndex)), // Navigate to LoginPage
+              builder: (context) => RestaurantHomePage(
+                  selectedIndex:
+                      widget.selectedIndex)), // Navigate to LoginPage
         );
       });
     }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:iconsax/iconsax.dart';  // Import Iconsax icons
+// Import Iconsax icons
 
 class HeaderWidget extends StatelessWidget {
   final IconData leftIcon;
@@ -15,8 +15,8 @@ class HeaderWidget extends StatelessWidget {
     required this.leftIcon,
     required this.onLeftButtonPressed,
     required this.headingText,
-    this.headingIcon,  // Optional heading icon
-    this.onHeadingButtonPressed,  // Optional heading button press callback
+    this.headingIcon, // Optional heading icon
+    this.onHeadingButtonPressed, // Optional heading button press callback
     required this.rightIcon,
     required this.onRightButtonPressed,
   });
@@ -24,11 +24,13 @@ class HeaderWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width; // Get screen width
-    double iconSize = screenWidth * 0.06;  // Icon size relative to screen width
-    double containerSize = screenWidth * 0.12;  // Container size relative to screen
+    double iconSize = screenWidth * 0.06; // Icon size relative to screen width
+    double containerSize =
+        screenWidth * 0.12; // Container size relative to screen
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),  // Responsive padding
+      padding: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.04), // Responsive padding
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -52,7 +54,8 @@ class HeaderWidget extends StatelessWidget {
 
           // Middle (Location text and optional heading icon)
           GestureDetector(
-            onTap: onHeadingButtonPressed ?? () {},  // Handle if onHeadingButtonPressed is provided
+            onTap: onHeadingButtonPressed ??
+                () {}, // Handle if onHeadingButtonPressed is provided
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
               decoration: BoxDecoration(
@@ -62,7 +65,8 @@ class HeaderWidget extends StatelessWidget {
               height: containerSize,
               child: Row(
                 children: [
-                  if (headingIcon != null)  // Only show the headingIcon if it's provided
+                  if (headingIcon !=
+                      null) // Only show the headingIcon if it's provided
                     Icon(
                       headingIcon,
                       color: const Color(0xFFD0F0C0),
@@ -73,9 +77,10 @@ class HeaderWidget extends StatelessWidget {
                     headingText,
                     style: const TextStyle(
                       color: Color(0xFFEEEFEF),
-                      fontSize: 20,  // Set font size to 20
-                      fontWeight: FontWeight.normal,  // Set weight to normal
-                      fontFamily: 'Helvetica Neue',  // Set font to Helvetica Neue
+                      fontSize: 20, // Set font size to 20
+                      fontWeight: FontWeight.normal, // Set weight to normal
+                      fontFamily:
+                          'Helvetica Neue', // Set font to Helvetica Neue
                     ),
                   ),
                 ],
