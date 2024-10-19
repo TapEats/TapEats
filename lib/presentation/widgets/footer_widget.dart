@@ -25,25 +25,29 @@ class _CustomFooterState extends State<CustomFooter> {
           case 0:
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => HomePage(selectedIndex: index)),
+              MaterialPageRoute(
+                  builder: (context) => HomePage(selectedIndex: index)),
             );
             break;
           case 1:
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => MenuPage(selectedIndex: index)),
+              MaterialPageRoute(
+                  builder: (context) => MenuPage(selectedIndex: index)),
             );
             break;
           case 2:
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => FavouritesPage(selectedIndex: index)),
+              MaterialPageRoute(
+                  builder: (context) => FavouritesPage(selectedIndex: index)),
             );
             break;
           case 3:
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ProfilePage(selectedIndex: index)),
+              MaterialPageRoute(
+                  builder: (context) => ProfilePage(selectedIndex: index)),
             );
             break;
         }

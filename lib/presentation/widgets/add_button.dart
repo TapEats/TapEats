@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:iconsax/iconsax.dart';
 
 // AddButton Widget
 class AddButton extends StatelessWidget {
@@ -10,7 +9,7 @@ class AddButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onPressed,  // This triggers the add-to-cart logic
+      onTap: onPressed, // This triggers the add-to-cart logic
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         decoration: BoxDecoration(
@@ -29,6 +28,3 @@ class AddButton extends StatelessWidget {
     );
   }
 }
-
-
-

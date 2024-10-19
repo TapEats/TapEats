@@ -8,7 +8,8 @@ class SideMenuOverlay extends StatefulWidget {
   State<SideMenuOverlay> createState() => _SideMenuOverlayState();
 }
 
-class _SideMenuOverlayState extends State<SideMenuOverlay> with SingleTickerProviderStateMixin {
+class _SideMenuOverlayState extends State<SideMenuOverlay>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Offset> _slideAnimation;
 
@@ -17,7 +18,8 @@ class _SideMenuOverlayState extends State<SideMenuOverlay> with SingleTickerProv
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 250), // Reduced duration for faster closing
+      duration: const Duration(
+          milliseconds: 250), // Reduced duration for faster closing
     );
     _slideAnimation = Tween<Offset>(
       begin: const Offset(-1.0, 0.0), // Start off-screen to the left
@@ -50,11 +52,13 @@ class _SideMenuOverlayState extends State<SideMenuOverlay> with SingleTickerProv
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.black.withOpacity(0.5), // Semi-transparent background
+        backgroundColor:
+            Colors.black.withOpacity(0.5), // Semi-transparent background
         body: Stack(
           children: [
             GestureDetector(
-              onTap: () {}, // Prevent the background tap from closing the menu when tapping inside the menu
+              onTap:
+                  () {}, // Prevent the background tap from closing the menu when tapping inside the menu
               child: SlideTransition(
                 position: _slideAnimation,
                 child: Container(
@@ -73,7 +77,8 @@ class _SideMenuOverlayState extends State<SideMenuOverlay> with SingleTickerProv
                       // Image at the top
                       const CircleAvatar(
                         radius: 40,
-                        backgroundImage: AssetImage('assets/images/cupcake.png'), // Add your own image asset here
+                        backgroundImage: AssetImage(
+                            'assets/images/cupcake.png'), // Add your own image asset here
                       ),
                       const SizedBox(height: 20),
                       _buildMenuItem('Home', Iconsax.home),
