@@ -2,13 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tapeats/presentation/screens/user_side/status_page.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
+import 'package:tapeats/services/handle_checkout.dart';
 
 class CartPage extends StatefulWidget {
   final Map<String, int> cartItems;
   final int totalItems;
+
   const CartPage({
     super.key,
     required this.cartItems,
@@ -41,9 +44,8 @@ class _CartPageState extends State<CartPage> {
     for (var item in widget.cartItems.entries) {
       final response = await supabase
           .from('menu')
-          .select('name, price, rating, cooking_time, image_url')
-          .eq('name',
-              item.key) // Match the name of the cart item with the menu name
+          .select('menu_id, name, price, rating, cooking_time, image_url, category')
+          .eq('name', item.key)
           .single();
 
       if (response.isNotEmpty) {
@@ -90,6 +92,83 @@ class _CartPageState extends State<CartPage> {
     });
   }
 
+  // Modified to handle the order and get the returned order ID
+void _handleCheckout() async {
+  try {
+    // Get the generated order ID after handling checkout
+    final String? orderId = await handleCheckout(context, widget.cartItems);
+
+    if (orderId != null) {
+      // Show success animation and navigate to status page with the generated orderId
+      _showOrderSuccessAnimation(orderId);
+    } else {
+      // Handle failed checkout, e.g., show an error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to place order')),
+      );
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print('Checkout failed: $e');
+    }
+  }
+}
+
+void _showOrderSuccessAnimation(String orderId) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Iconsax.tick_circle,
+              color: Color(0xFFD0F0C0),
+              size: 60,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Order Successful!',
+              style: TextStyle(
+                color: Color(0xFFEEEFEF),
+                fontFamily: 'Helvetica Neue',
+                fontSize: 18,
+              ),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Redirecting to status page...',
+              style: TextStyle(
+                color: Color(0xFF8F8F8F),
+                fontFamily: 'Helvetica Neue',
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+
+  // Close the dialog after a delay and navigate to the StatusPage.
+  Future.delayed(const Duration(seconds: 3), () {
+    Navigator.of(context).pop(); // Close the dialog
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => StatusPage(orderId: orderId), // Use the returned orderId
+      ),
+    );
+  });
+}
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -133,12 +212,7 @@ class _CartPageState extends State<CartPage> {
               child: SliderButton(
                 labelText: 'Checkout',
                 subText: '\$${totalAmount.toStringAsFixed(2)}',
-                onSlideComplete: () {
-                  // Perform checkout logic here
-                  if (kDebugMode) {
-                    print('Checkout completed');
-                  }
-                },
+                onSlideComplete: _handleCheckout, // Call checkout handler
               ),
             ),
             const SizedBox(height: 20),
@@ -199,7 +273,10 @@ class _CartPageState extends State<CartPage> {
                   ],
                 ),
                 const SizedBox(height: 5),
-                Text(
+                
+                Row(
+                  children: [
+                    Text(
                   '$cookingTime • ',
                   style: const TextStyle(
                     fontSize: 14,
@@ -207,10 +284,7 @@ class _CartPageState extends State<CartPage> {
                     color: Color(0xFF8F8F8F),
                   ),
                 ),
-                Row(
-                  children: [
-                    const Icon(Iconsax.star,
-                        size: 16, color: Color(0xFFEEEFEF)),
+                    const Icon(Iconsax.star, size: 16, color: Color(0xFFEEEFEF)),
                     const SizedBox(width: 5),
                     Text(
                       rating.toString(),
@@ -302,12 +376,10 @@ class _CartPageState extends State<CartPage> {
       child: Column(
         children: [
           _buildPriceRow('Item total', '\$${itemTotal.toStringAsFixed(2)}'),
-          _buildPriceRow('GST and restaurant charges',
-              '\$${gstCharges.toStringAsFixed(2)}'),
+          _buildPriceRow('GST and restaurant charges', '\$${gstCharges.toStringAsFixed(2)}'),
           _buildPriceRow('Platform fee', '\$${platformFee.toStringAsFixed(2)}'),
           const Divider(color: Color(0xFF8F8F8F)),
-          _buildPriceRow('Total', '\$${totalAmount.toStringAsFixed(2)}',
-              isTotal: true),
+          _buildPriceRow('Total', '\$${totalAmount.toStringAsFixed(2)}', isTotal: true),
         ],
       ),
     );
@@ -342,3 +414,4 @@ class _CartPageState extends State<CartPage> {
     );
   }
 }
+
