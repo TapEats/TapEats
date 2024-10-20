@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:tapeats/presentation/screens/restaurant_home_page.dart';
 import 'package:tapeats/presentation/screens/user_side/home_page.dart';
 import 'dart:async'; // For the Timer functionality
 import 'package:tapeats/services/otp_service.dart'; // Import the OTP service
@@ -66,34 +67,68 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     super.dispose();
   }
 
+Future<String> _fetchUserRole(String phoneNumber) async {
+  final supabase = Supabase.instance.client;
+
+  final response = await supabase
+      .from('users')
+      .select('role') // Fetch the role column
+      .eq('phone_number', phoneNumber)
+      .maybeSingle(); // Fetch the user based on the phone number
+
+  if (response == null || response['role'] == null) {
+    throw Exception('User role not found or user does not exist');
+  }
+
+  return response['role'] as String; // Return the role as a string
+}
+
   // Logic to handle OTP verification
-  Future<void> verifyOtp() async {
-    String otp =
-        '${otpController1.text}${otpController2.text}${otpController3.text}${otpController4.text}';
-    try {
-      // Verify the OTP
-      await _otpService.verifyOtp(widget.phoneNumber, otp);
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('OTP verified successfully')));
+Future<void> verifyOtp() async {
+  String otp = '${otpController1.text}${otpController2.text}${otpController3.text}${otpController4.text}';
+  
+  try {
+    // Verify the OTP
+    await _otpService.verifyOtp(widget.phoneNumber, otp);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('OTP verified successfully')));
 
-      // After OTP verification, insert the user data if needed
-      await _upsertUser(
-          widget.phoneNumber, widget.username); // Pass the username here
+    // Insert the user data into the database if it doesn't exist
+    await _upsertUser(widget.phoneNumber, widget.username); // Pass the username
 
-      // Navigate to the HomePage after successful verification
+    // Fetch the user's role
+    final userRole = await _fetchUserRole(widget.phoneNumber);
+
+    // Navigate to the correct home page based on the role
+    if (userRole == 'customer') {
+      // Navigate to HomePage for customers
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-            builder: (context) => HomePage(
-                  selectedIndex: widget.selectedIndex,
-                )), // Replace with your HomePage widget
+          builder: (context) => HomePage(selectedIndex: widget.selectedIndex),
+        ),
       );
-    } catch (e) {
-      print('Error verifying OTP: $e');
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Failed to verify OTP')));
+    } else if (userRole == 'restaurant_owner') {
+      // Navigate to RestaurantHomePage for restaurant owners
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => RestaurantHomePage(selectedIndex: widget.selectedIndex), // Replace with your RestaurantHomePage widget
+        ),
+      );
+    } else {
+      throw Exception('Unknown user role');
     }
+  } catch (e) {
+    if (kDebugMode) {
+      print('Error verifying OTP or navigating based on role: $e');
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Failed to verify OTP or fetch user role')),
+    );
   }
+}
+
 
   Future<void> _upsertUser(String phoneNumber, String username) async {
     final supabase = Supabase.instance.client;
@@ -156,7 +191,9 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
       // Start the cooldown after sending OTP
       startResendCooldown();
     } catch (e) {
-      print('Error resending OTP: $e');
+      if (kDebugMode) {
+        print('Error resending OTP: $e');
+      }
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Failed to resend OTP')));
     }

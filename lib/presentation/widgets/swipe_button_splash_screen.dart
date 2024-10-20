@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tapeats/presentation/screens/restaurant_home_page.dart';
 import 'package:tapeats/presentation/screens/user_side/home_page.dart';
-import 'package:tapeats/presentation/screens/login_page.dart';
 
 class SwipeButtonSplashScreen extends StatefulWidget {
   final int selectedIndex;
   const SwipeButtonSplashScreen({super.key, required this.selectedIndex});
 
   @override
-  _SwipeButtonSplashScreenState createState() =>
+  State<SwipeButtonSplashScreen> createState() =>
       _SwipeButtonSplashScreenState();
 }
 
@@ -16,7 +16,8 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Color?> _rectBackgroundAnimation;
-  final SupabaseClient supabase = Supabase.instance.client; // Supabase client
+  final SupabaseClient supabase = Supabase.instance.client;
+
   bool _isCompleted = false;
 
   @override
@@ -31,38 +32,63 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
 
     // Background color transition for the entire rectangle container
     _rectBackgroundAnimation = ColorTween(
-      begin: Colors.transparent, // Initial transparent background
-      end: const Color(0xFF151611), // Target color (dark green)
+      begin: Colors.transparent,
+      end: const Color(0xFF151611), // Target color as the background changes
     ).animate(_controller);
   }
 
   // Function to handle swipe right completion
-  void _onSwipeRight() async {
+  Future<void> _onSwipeRight() async {
     if (!_isCompleted) {
       _controller.forward();
       setState(() {
         _isCompleted = true;
       });
 
-      // Check if the user is logged in
-      final session = supabase.auth.currentSession;
-
-      Future.delayed(const Duration(milliseconds: 200), () {
-        if (session != null) {
-          // User is already logged in, navigate to the HomePage
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomePage(selectedIndex: 0,)),
-          );
-        } else {
-          // User is not logged in, navigate to the LoginPage
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => LoginPage()),
-          );
-        }
-      });
+      // Fetch user role and navigate based on the role
+      await _navigateBasedOnUserRole();
     }
+  }
+
+  // Function to fetch user role and navigate
+  Future<void> _navigateBasedOnUserRole() async {
+    final user = supabase.auth.currentUser;
+
+    if (user != null) {
+      final userRole = await _fetchUserRole(user.phone!);
+
+      if (userRole == 'customer') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomePage(selectedIndex: 0),
+          ),
+        );
+      } else if (userRole == 'restaurant_owner') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RestaurantHomePage(selectedIndex: 0), // Replace with your page
+          ),
+        );
+      } else {
+        throw Exception('Unknown user role');
+      }
+    }
+  }
+
+  // Fetch user role from the database
+  Future<String?> _fetchUserRole(String phoneNumber) async {
+    final response = await supabase
+        .from('users')
+        .select('role')
+        .eq('phone_number', phoneNumber)
+        .maybeSingle();
+
+    if (response != null && response['role'] != null) {
+      return response['role'];
+    }
+    return null;
   }
 
   @override
@@ -77,9 +103,9 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
           onHorizontalDragUpdate: (details) {
             setState(() {
               // Calculate the swipe percentage
-              double dragPercentage = details.primaryDelta! / containerWidth;
-              if (dragPercentage > 0) {
-                _controller.value += dragPercentage;
+              double dragPercentage = details.localPosition.dx / containerWidth;
+              if (dragPercentage > 0 && dragPercentage <= 1) {
+                _controller.value = dragPercentage;
               }
             });
           },
