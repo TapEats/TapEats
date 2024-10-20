@@ -6,7 +6,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends StatelessWidget {
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _usernameController = TextEditingController(); // Username field
+  final TextEditingController _usernameController =
+      TextEditingController(); // Username field
   final OtpService _otpService = OtpService(Supabase.instance.client);
 
   LoginPage({super.key});
@@ -19,55 +20,6 @@ class LoginPage extends StatelessWidget {
     }
     return phoneNumber;
   }
-
-  // Function to insert or update user in the 'users' table
-Future<void> _upsertUser(String phoneNumber, String username) async {
-  final supabase = Supabase.instance.client;
-
-  // Fetch the current authenticated user's ID from Supabase Auth
-  final userId = supabase.auth.currentUser?.id;
-  if (userId == null) {
-    throw Exception('User is not authenticated.');
-  }
-
-  try {
-    // Check if the user already exists based on phone number
-    final userResponse = await supabase
-        .from('users')
-        .select('user_id')
-        .eq('phone_number', phoneNumber)
-        .maybeSingle();
-
-    if (userResponse == null) {
-      // User doesn't exist, insert new record
-      final insertResponse = await supabase.from('users').insert({
-        "user_id": userId,
-        "created_at": DateTime.now().toUtc().toIso8601String(),
-        "phone_number": phoneNumber,
-        "username": username,
-        "role": "customer"
-      }); // Make sure we are executing the request
-
-      if (insertResponse.error != null) {
-        throw Exception('Error inserting user: ${insertResponse.error!.message}');
-      }
-
-      if (kDebugMode) {
-        print("User inserted successfully!");
-      }
-    } else {
-      // User exists, no need to insert
-      if (kDebugMode) {
-        print('User already exists in the database.');
-      }
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      print('Error during login: $e');
-    }
-  }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -201,13 +153,15 @@ Future<void> _upsertUser(String phoneNumber, String username) async {
                         phoneNumber); // Add +91 prefix if needed
 
                     try {
-                      await _upsertUser(formattedPhoneNumber, username);
                       await _otpService.sendOtp(formattedPhoneNumber);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => OtpVerificationPage(
-                              phoneNumber: formattedPhoneNumber),
+                            phoneNumber: formattedPhoneNumber,
+                            username:
+                                username, // Pass the username to the OTP verification page
+                          ),
                         ),
                       );
                     } catch (e) {

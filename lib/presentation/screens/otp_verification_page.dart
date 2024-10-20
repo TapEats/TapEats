@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:tapeats/presentation/screens/user_side/home_page.dart';
 import 'dart:async'; // For the Timer functionality
@@ -6,8 +7,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OtpVerificationPage extends StatefulWidget {
   final String phoneNumber;
+  final String username; // Add the username here
   final int selectedIndex = 0;
-  const OtpVerificationPage({super.key, required this.phoneNumber});
+
+  const OtpVerificationPage({
+    super.key,
+    required this.phoneNumber,
+    required this.username, // Pass the username
+  });
 
   @override
   State<OtpVerificationPage> createState() => _OtpVerificationPageState();
@@ -18,7 +25,8 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
   final TextEditingController otpController2 = TextEditingController();
   final TextEditingController otpController3 = TextEditingController();
   final TextEditingController otpController4 = TextEditingController();
-  final OtpService _otpService = OtpService(Supabase.instance.client);  // Instance of the service
+  final OtpService _otpService =
+      OtpService(Supabase.instance.client); // Instance of the service
 
   late FocusNode focusNode1;
   late FocusNode focusNode2;
@@ -59,41 +67,102 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
   }
 
   // Logic to handle OTP verification
-Future<void> verifyOtp() async {
-  String otp = '${otpController1.text}${otpController2.text}${otpController3.text}${otpController4.text}';
-  try {
-    await _otpService.verifyOtp(widget.phoneNumber, otp);
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OTP verified successfully')));
+  Future<void> verifyOtp() async {
+    String otp =
+        '${otpController1.text}${otpController2.text}${otpController3.text}${otpController4.text}';
+    try {
+      // Verify the OTP
+      await _otpService.verifyOtp(widget.phoneNumber, otp);
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('OTP verified successfully')));
 
-    // Navigate to the HomePage after successful verification
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => HomePage(selectedIndex: widget.selectedIndex,)), // Replace with your HomePage widget
-    );
-  } catch (e) {
-    print('Error verifying OTP: $e');
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to verify OTP')));
+      // After OTP verification, insert the user data if needed
+      await _upsertUser(
+          widget.phoneNumber, widget.username); // Pass the username here
+
+      // Navigate to the HomePage after successful verification
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) => HomePage(
+                  selectedIndex: widget.selectedIndex,
+                )), // Replace with your HomePage widget
+      );
+    } catch (e) {
+      print('Error verifying OTP: $e');
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Failed to verify OTP')));
+    }
   }
-}
 
+  Future<void> _upsertUser(String phoneNumber, String username) async {
+    final supabase = Supabase.instance.client;
 
-  // Logic for handling resend OTP
+    final userId = supabase.auth.currentUser
+        ?.id; // Get the authenticated user ID after OTP verification
+
+    if (userId == null) {
+      throw Exception('User is not authenticated.');
+    }
+
+    try {
+      // Check if the user already exists based on phone number
+      final userResponse = await supabase
+          .from('users')
+          .select('user_id')
+          .eq('phone_number', phoneNumber)
+          .maybeSingle();
+
+      if (userResponse == null) {
+        // User doesn't exist, insert new record
+        final insertResponse = await supabase.from('users').insert({
+          "user_id": userId,
+          "created_at": DateTime.now().toUtc().toIso8601String(),
+          "phone_number": phoneNumber,
+          "username": username, // Insert the username
+          "role": "customer",
+        });
+
+        if (insertResponse.error != null) {
+          throw Exception(
+              'Error inserting user: ${insertResponse.error!.message}');
+        }
+
+        if (kDebugMode) {
+          print("User inserted successfully!");
+        }
+      } else {
+        // User exists, no need to insert
+        if (kDebugMode) {
+          print('User already exists in the database.');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error during upsert: $e');
+      }
+    }
+  }
+
+// Logic for handling resend OTP
   Future<void> resendOtp() async {
     if (!_isResendAllowed) return;
 
     try {
       await _otpService.sendOtp(widget.phoneNumber);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OTP has been resent')));
-      
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('OTP has been resent')));
+
       // Start the cooldown after sending OTP
       startResendCooldown();
     } catch (e) {
       print('Error resending OTP: $e');
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to resend OTP')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Failed to resend OTP')));
     }
   }
 
-  // Start the cooldown for resending OTP
+// Start the cooldown for resending OTP
   void startResendCooldown() {
     setState(() {
       _isResendAllowed = false;
@@ -108,39 +177,42 @@ Future<void> verifyOtp() async {
         if (_resendCooldown > 0) {
           _resendCooldown--; // Decrease the cooldown time
         } else {
-          _isResendAllowed = true;  // Allow resending OTP after the cooldown
-          timer.cancel();  // Stop the timer
+          _isResendAllowed = true; // Allow resending OTP after the cooldown
+          timer.cancel(); // Stop the timer
         }
       });
     });
   }
 
-  // Build the OTP box
+// Build the OTP box
   Widget _buildOtpBox(TextEditingController controller, FocusNode focusNode) {
     return Container(
       width: 60,
       height: 55,
       decoration: BoxDecoration(
         color: focusNode.hasFocus
-            ? const Color(0xFF151611)  // Focused box background
+            ? const Color(0xFF151611) // Focused box background
             : controller.text.isEmpty
-                ? const Color(0xFF222222)  // Empty box background
+                ? const Color(0xFF222222) // Empty box background
                 : const Color(0xFFD0F0C0), // Filled box background
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: focusNode.hasFocus ? const Color(0xFFD0F0C0) : Colors.transparent,  // Green border for focused box
+          color: focusNode.hasFocus
+              ? const Color(0xFFD0F0C0)
+              : Colors.transparent, // Green border for focused box
           width: 2,
         ),
         boxShadow: controller.text.isEmpty
             ? [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.25), // Inner shadow for empty boxes
+                  color: Colors.black
+                      .withOpacity(0.25), // Inner shadow for empty boxes
                   offset: const Offset(0, 0),
                   blurRadius: 10,
                   spreadRadius: 0,
                 ),
               ]
-            : null,  // No shadow for filled boxes
+            : null, // No shadow for filled boxes
       ),
       child: TextField(
         controller: controller,
@@ -168,12 +240,13 @@ Future<void> verifyOtp() async {
         ),
         onChanged: (value) {
           if (value.isNotEmpty) {
-            FocusScope.of(context).nextFocus();  // Move to the next OTP box on input
+            FocusScope.of(context)
+                .nextFocus(); // Move to the next OTP box on input
           }
-          setState(() {});  // Refresh to update background color
+          setState(() {}); // Refresh to update background color
         },
         onTap: () {
-          setState(() {});  // Refresh to apply focus border and background color
+          setState(() {}); // Refresh to apply focus border and background color
         },
       ),
     );
@@ -221,10 +294,10 @@ Future<void> verifyOtp() async {
             const SizedBox(height: 30),
             // OTP Input Fields
             Row(
-              mainAxisAlignment: MainAxisAlignment.start,  // Align to left
+              mainAxisAlignment: MainAxisAlignment.start, // Align to left
               children: [
                 _buildOtpBox(otpController1, focusNode1),
-                const SizedBox(width: 10),  // Space between boxes
+                const SizedBox(width: 10), // Space between boxes
                 _buildOtpBox(otpController2, focusNode2),
                 const SizedBox(width: 10),
                 _buildOtpBox(otpController3, focusNode3),
@@ -243,11 +316,14 @@ Future<void> verifyOtp() async {
               ),
             ),
             GestureDetector(
-              onTap: _isResendAllowed ? resendOtp : null,  // Handle resend OTP
+              onTap: _isResendAllowed ? resendOtp : null, // Handle resend OTP
               child: Text(
-                _isResendAllowed ? 'Resend Code' : 'Resend in $_resendCooldown sec',
+                _isResendAllowed
+                    ? 'Resend Code'
+                    : 'Resend in $_resendCooldown sec',
                 style: TextStyle(
-                  color: _isResendAllowed ? const Color(0xFFD0F0C0) : Colors.grey,
+                  color:
+                      _isResendAllowed ? const Color(0xFFD0F0C0) : Colors.grey,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                   fontFamily: 'Helvetica Neue',
@@ -256,7 +332,7 @@ Future<void> verifyOtp() async {
             ),
             const Spacer(),
             ElevatedButton(
-              onPressed: verifyOtp,  // Call the verify OTP function
+              onPressed: verifyOtp, // Call the verify OTP function
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFD0F0C0),
                 minimumSize: const Size(double.infinity, 50),
