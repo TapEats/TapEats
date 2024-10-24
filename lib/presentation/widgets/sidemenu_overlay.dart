@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:tapeats/presentation/screens/user_side/order_history_page.dart';
 
 class SideMenuOverlay extends StatefulWidget {
   const SideMenuOverlay({super.key});
@@ -18,18 +19,17 @@ class _SideMenuOverlayState extends State<SideMenuOverlay>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(
-          milliseconds: 250), // Reduced duration for faster closing
+      duration: const Duration(milliseconds: 250),
     );
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(-1.0, 0.0), // Start off-screen to the left
-      end: Offset.zero, // End on-screen
+      begin: const Offset(-1.0, 0.0),
+      end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _controller,
       curve: Curves.easeInOut,
     ));
 
-    _controller.forward(); // Animate menu open
+    _controller.forward();
   }
 
   @override
@@ -45,27 +45,25 @@ class _SideMenuOverlayState extends State<SideMenuOverlay>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _closeMenu, // Close menu when tapping on the background
+      onTap: _closeMenu,
       onHorizontalDragUpdate: (details) {
         if (details.primaryDelta != null && details.primaryDelta! < 0) {
-          _closeMenu(); // Close menu when swiping to the left
+          _closeMenu();
         }
       },
       child: Scaffold(
-        backgroundColor:
-            Colors.black.withOpacity(0.5), // Semi-transparent background
+        backgroundColor: Colors.black.withOpacity(0.5),
         body: Stack(
           children: [
             GestureDetector(
-              onTap:
-                  () {}, // Prevent the background tap from closing the menu when tapping inside the menu
+              onTap: () {},
               child: SlideTransition(
                 position: _slideAnimation,
                 child: Container(
                   width: 250,
                   height: MediaQuery.of(context).size.height,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF1A1A1A), // Background color of menu
+                    color: Color(0xFF1A1A1A),
                     borderRadius: BorderRadius.only(
                       topRight: Radius.circular(20),
                       bottomRight: Radius.circular(20),
@@ -74,11 +72,10 @@ class _SideMenuOverlayState extends State<SideMenuOverlay>
                   child: Column(
                     children: [
                       const SizedBox(height: 50),
-                      // Image at the top
                       const CircleAvatar(
                         radius: 40,
-                        backgroundImage: AssetImage(
-                            'assets/images/cupcake.png'), // Add your own image asset here
+                        backgroundImage:
+                            AssetImage('assets/images/cupcake.png'),
                       ),
                       const SizedBox(height: 20),
                       _buildMenuItem('Home', Iconsax.home),
@@ -108,11 +105,23 @@ class _SideMenuOverlayState extends State<SideMenuOverlay>
         style: const TextStyle(
           color: Colors.white,
           fontSize: 18,
-          fontFamily: 'Helvetica Neue', // Assuming you are using this font
+          fontFamily: 'Helvetica Neue',
         ),
       ),
       onTap: () {
-        // Define actions for each menu item
+        if (title == 'History') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const OrderHistoryPage(
+                cartItems: {}, // Pass cartItems if needed
+                totalItems: 0, // Pass the total item count
+              ),
+            ),
+          );
+        } else {
+          // Handle other menu item taps if needed
+        }
       },
     );
   }
