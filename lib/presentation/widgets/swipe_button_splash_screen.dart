@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/restaurant_home_page.dart';
 import 'package:tapeats/presentation/screens/user_side/home_page.dart';
+import 'package:tapeats/presentation/screens/login_page.dart';
 
 class SwipeButtonSplashScreen extends StatefulWidget {
   final int selectedIndex;
@@ -38,6 +39,7 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
   }
 
   // Function to handle swipe right completion
+  // Function to handle swipe right completion
   Future<void> _onSwipeRight() async {
     if (!_isCompleted) {
       _controller.forward();
@@ -45,8 +47,19 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
         _isCompleted = true;
       });
 
-      // Fetch user role and navigate based on the role
-      await _navigateBasedOnUserRole();
+      // Check if the user is authenticated
+      final user = supabase.auth.currentUser;
+
+      if (user != null) {
+        // If the user is authenticated, navigate based on their role
+        await _navigateBasedOnUserRole();
+      } else {
+        // If the user is not authenticated, navigate to the login page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
+      }
     }
   }
 
@@ -68,7 +81,8 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => RestaurantHomePage(selectedIndex: 0), // Replace with your page
+            builder: (context) =>
+                RestaurantHomePage(selectedIndex: 0), // Replace with your page
           ),
         );
       } else {
@@ -95,9 +109,11 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        double containerWidth = constraints.maxWidth; // Get rectangle container width
+        double containerWidth =
+            constraints.maxWidth; // Get rectangle container width
         double buttonWidth = 60; // The width of the swipe button itself
-        double maxDragDistance = containerWidth - buttonWidth; // Max drag distance
+        double maxDragDistance =
+            containerWidth - buttonWidth; // Max drag distance
 
         return GestureDetector(
           onHorizontalDragUpdate: (details) {
@@ -133,8 +149,10 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
                     width: containerWidth, // Rectangle adjusts to screen size
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(50),
-                      border: Border.all(color: const Color(0xFFD0F0C0), width: 4),
-                      color: _rectBackgroundAnimation.value, // Dynamic background color
+                      border:
+                          Border.all(color: const Color(0xFFD0F0C0), width: 4),
+                      color: _rectBackgroundAnimation
+                          .value, // Dynamic background color
                     ),
                     alignment: Alignment.center,
                     child: const Text(
@@ -163,7 +181,9 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
                         color: const Color(0xFFD0F0C0),
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: const [
-                          BoxShadow(blurRadius: 20, color: Color.fromARGB(102, 98, 98, 98)),
+                          BoxShadow(
+                              blurRadius: 20,
+                              color: Color.fromARGB(102, 98, 98, 98)),
                         ],
                       ),
                       alignment: Alignment.center,
@@ -174,7 +194,9 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
                           color: Color(0xFFEEEFEF), // Light arrow color
                           fontSize: 24,
                           shadows: [
-                            Shadow(blurRadius: 20, color: Color.fromARGB(255, 98, 98, 98)),
+                            Shadow(
+                                blurRadius: 20,
+                                color: Color.fromARGB(255, 98, 98, 98)),
                           ],
                         ),
                       ),
