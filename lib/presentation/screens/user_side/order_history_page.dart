@@ -1,14 +1,12 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
+import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
-import 'package:tapeats/presentation/widgets/add_button.dart';
-import 'package:tapeats/presentation/widgets/plus_button.dart';
-import 'package:tapeats/presentation/widgets/minus_button.dart';
+import 'package:tapeats/presentation/widgets/order_detail_widget.dart';
 
 class OrderHistoryPage extends StatefulWidget {
   final Map<String, int> cartItems;
@@ -36,6 +34,16 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     cartItems = Map.from(widget.cartItems);
     totalItems = widget.totalItems;
     _initializeUserData();
+  }
+
+  void _openSideMenu() {
+    setState(() {});
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false, // Keep the background semi-transparent
+        pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+      ),
+    );
   }
 
   Future<void> _initializeUserData() async {
@@ -102,28 +110,34 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     }
   }
 
-  void _addItemToCart(Map<String, dynamic> item) {
-    setState(() {
-      final itemName = item['name'] as String;
-      if (cartItems.containsKey(itemName)) {
-        cartItems[itemName] = cartItems[itemName]! + 1;
-      } else {
-        cartItems[itemName] = 1;
-      }
-      totalItems += 1;
-    });
-  }
+  // Logic to handle reordering and redirecting to cart
+  void _reorder(Map<String, dynamic> order) {
+    final items =
+        List<Map<String, dynamic>>.from(order['items'] as List<dynamic>);
 
-  void _removeItemFromCart(String itemName) {
-    setState(() {
-      if (cartItems.containsKey(itemName) && cartItems[itemName]! > 0) {
-        cartItems[itemName] = cartItems[itemName]! - 1;
-        totalItems -= 1;
-        if (cartItems[itemName] == 0) {
-          cartItems.remove(itemName);
+    // Add items from the selected order to the cart
+    for (var item in items) {
+      final itemName = item['name'] as String;
+      setState(() {
+        if (cartItems.containsKey(itemName)) {
+          cartItems[itemName] = cartItems[itemName]! + item['quantity'] as int;
+        } else {
+          cartItems[itemName] = item['quantity'] as int;
         }
-      }
-    });
+        totalItems += item['quantity'] as int;
+      });
+    }
+
+    // Redirect to the cart page after reordering
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CartPage(
+          cartItems: cartItems,
+          totalItems: totalItems,
+        ),
+      ),
+    );
   }
 
   @override
@@ -139,7 +153,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
               headingText: 'Order History',
               headingIcon: Iconsax.calendar,
               rightIcon: Iconsax.menu_1,
-              onRightButtonPressed: () {},
+              onRightButtonPressed: _openSideMenu,
             ),
             const SizedBox(height: 20),
             Expanded(
@@ -162,7 +176,16 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                         final items = List<Map<String, dynamic>>.from(
                             order['items'] as List<dynamic>);
 
-                        return _buildOrderCard(order, items);
+                        return OrderDetailWidget(
+                          orderId: order['order_id'].toString(),
+                          userName: order['username'] ?? "Customer",
+                          items: items,
+                          orderTime: DateTime.parse(order['order_time']),
+                          status: order['status'],
+                          onReorder: () => _reorder(order), // Reorder logic
+                          showReorderButton:
+                              true, // Show Reorder button for history
+                        );
                       },
                     ),
             ),
@@ -218,192 +241,6 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
             const SizedBox(height: 20),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildOrderCard(
-    Map<String, dynamic> order,
-    List<Map<String, dynamic>> items,
-  ) {
-    final DateTime orderTime = DateTime.parse(order['order_time']);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Order ID: ${order['order_id'].toString().substring(0, 8)}',
-                    style: const TextStyle(
-                      color: Color(0xFF8F8F8F),
-                      fontSize: 14,
-                      fontFamily: 'Helvetica Neue',
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${orderTime.hour}:${orderTime.minute.toString().padLeft(2, '0')}, ${orderTime.day} ${_getMonth(orderTime.month)} ${orderTime.year}',
-                    style: const TextStyle(
-                      color: Color(0xFF8F8F8F),
-                      fontSize: 12,
-                      fontFamily: 'Helvetica Neue',
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  order['status'],
-                  style: const TextStyle(
-                    color: Color(0xFFD0F0C0),
-                    fontSize: 14,
-                    fontFamily: 'Helvetica Neue',
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          ...items.map((item) => _buildOrderItem(item)),
-          const SizedBox(height: 15),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Total',
-                style: TextStyle(
-                  color: Color(0xFFEEEFEF),
-                  fontSize: 16,
-                  fontFamily: 'Helvetica Neue',
-                ),
-              ),
-              Text(
-                '\$${order['total_price'].toStringAsFixed(2)}',
-                style: const TextStyle(
-                  color: Color(0xFFD0F0C0),
-                  fontSize: 16,
-                  fontFamily: 'Helvetica Neue',
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getMonth(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
-    return months[month - 1];
-  }
-
-  Widget _buildOrderItem(Map<String, dynamic> item) {
-    final itemInCart = cartItems[item['name']] ?? 0;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 15),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.network(
-              item['image_url'],
-              width: 80,
-              height: 80,
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item['name'],
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontFamily: 'Helvetica Neue',
-                    color: Color(0xFFEEEFEF),
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  '${item['cooking_time']} mins • ⭐ ${item['rating']}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontFamily: 'Helvetica Neue',
-                    color: Color(0xFF8F8F8F),
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  '\$${item['price'].toStringAsFixed(2)} × ${item['quantity']}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontFamily: 'Helvetica Neue',
-                    color: Color(0xFFD0F0C0),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (itemInCart > 0)
-            Row(
-              children: [
-                MinusButton(
-                  onPressed: () => _removeItemFromCart(item['name']),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  itemInCart.toString(),
-                  style: const TextStyle(
-                    color: Color(0xFFEEEFEF),
-                    fontSize: 16,
-                    fontFamily: 'Helvetica Neue',
-                  ),
-                ),
-                const SizedBox(width: 10),
-                PlusButton(
-                  onPressed: () => _addItemToCart(item),
-                ),
-              ],
-            )
-          else
-            AddButton(onPressed: () => _addItemToCart(item)),
-        ],
       ),
     );
   }
