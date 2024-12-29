@@ -4,7 +4,6 @@ import 'package:iconsax/iconsax.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
 import 'package:tapeats/presentation/widgets/add_button.dart';
-import 'package:tapeats/presentation/widgets/footer_widget.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/minus_button.dart';
 import 'package:tapeats/presentation/widgets/plus_button.dart';
@@ -13,8 +12,7 @@ import 'package:tapeats/presentation/widgets/slider_button.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 
 class MenuPage extends StatefulWidget {
-  final int selectedIndex;
-  const MenuPage({super.key, required this.selectedIndex});
+  const MenuPage({super.key});
 
   @override
   State<MenuPage> createState() => _MenuPageState();
@@ -172,9 +170,6 @@ class _MenuPageState extends State<MenuPage> {
           ],
         ),
       ),
-      bottomNavigationBar: Hero(
-          tag: 'footerHero',
-          child: CustomFooter(selectedIndex: widget.selectedIndex)),
     );
   }
 

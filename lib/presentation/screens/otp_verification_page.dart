@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:tapeats/presentation/screens/restaurant_home_page.dart';
-import 'package:tapeats/presentation/screens/user_side/home_page.dart';
+import 'package:tapeats/presentation/screens/user_side/main_screen.dart';
 import 'dart:async'; // For the Timer functionality
 import 'package:tapeats/services/otp_service.dart'; // Import the OTP service
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -105,7 +105,7 @@ Future<void> verifyOtp() async {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => HomePage(selectedIndex: widget.selectedIndex),
+          builder: (context) => const MainScreen(),
         ),
       );
     } else if (userRole == 'restaurant_owner') {

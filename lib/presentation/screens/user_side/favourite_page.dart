@@ -3,7 +3,6 @@ import 'package:iconsax/iconsax.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
 import 'package:tapeats/presentation/widgets/add_button.dart';
-import 'package:tapeats/presentation/widgets/footer_widget.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/minus_button.dart';
 import 'package:tapeats/presentation/widgets/plus_button.dart';
@@ -11,8 +10,8 @@ import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
 
 class FavouritesPage extends StatefulWidget {
-  final int selectedIndex;
-  const FavouritesPage({super.key, required this.selectedIndex});
+
+  const FavouritesPage({super.key});
 
   @override
   State<FavouritesPage> createState() => _FavouritesPageState();
@@ -125,9 +124,6 @@ class _FavouritesPageState extends State<FavouritesPage> {
           ],
         ),
       ),
-      bottomNavigationBar: Hero(
-          tag: 'footerHero',
-          child: CustomFooter(selectedIndex: widget.selectedIndex)),
     );
   }
 
