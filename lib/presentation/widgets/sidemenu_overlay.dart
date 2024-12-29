@@ -52,7 +52,7 @@ class _SideMenuOverlayState extends State<SideMenuOverlay>
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.black.withOpacity(0.5),
+        backgroundColor: Colors.black.withAlpha(128),
         body: Stack(
           children: [
             GestureDetector(

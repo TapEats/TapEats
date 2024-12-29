@@ -4,21 +4,69 @@ import 'package:tapeats/presentation/screens/otp_verification_page.dart';
 import 'package:tapeats/services/otp_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class LoginPage extends StatelessWidget {
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _usernameController =
-      TextEditingController(); // Username field
-  final OtpService _otpService = OtpService(Supabase.instance.client);
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
-  LoginPage({super.key});
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final OtpService _otpService = OtpService(Supabase.instance.client);
 
   // Function to format the phone number with country code
   String _formatPhoneNumber(String phoneNumber) {
-    // Ensure the phone number has the +91 prefix
     if (!phoneNumber.startsWith('91')) {
       return '91$phoneNumber';
     }
     return phoneNumber;
+  }
+
+Future<void> _handleLogin() async {
+  String phoneNumber = _phoneController.text.trim();
+  String username = _usernameController.text.trim();
+
+  if (phoneNumber.isEmpty || username.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please enter both phone number and username')),
+    );
+    return;
+  }
+
+  String formattedPhoneNumber = _formatPhoneNumber(phoneNumber);
+
+  try {
+    await _otpService.sendOtp(formattedPhoneNumber);
+    if (!mounted) return;
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OtpVerificationPage(
+          phoneNumber: formattedPhoneNumber,
+          username: username,
+        ),
+      ),
+    );
+  } catch (e) {
+    if (kDebugMode) {
+      print('Error during login: $e');
+    }
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to send OTP: ${e.toString()}')),
+    );
+  }
+}
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _usernameController.dispose();
+    super.dispose();
   }
 
   @override
@@ -144,33 +192,7 @@ class LoginPage extends StatelessWidget {
               ),
               const Spacer(),
               ElevatedButton(
-                onPressed: () async {
-                  String phoneNumber = _phoneController.text.trim();
-                  String username = _usernameController.text.trim();
-
-                  if (phoneNumber.isNotEmpty && username.isNotEmpty) {
-                    String formattedPhoneNumber = _formatPhoneNumber(
-                        phoneNumber); // Add +91 prefix if needed
-
-                    try {
-                      await _otpService.sendOtp(formattedPhoneNumber);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => OtpVerificationPage(
-                            phoneNumber: formattedPhoneNumber,
-                            username:
-                                username, // Pass the username to the OTP verification page
-                          ),
-                        ),
-                      );
-                    } catch (e) {
-                      if (kDebugMode) {
-                        print('Error during login: $e');
-                      }
-                    }
-                  }
-                },
+                onPressed: _handleLogin,  // Use the extracted method
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFD0F0C0),
                   minimumSize: const Size(double.infinity, 50),

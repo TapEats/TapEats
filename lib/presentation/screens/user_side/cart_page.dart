@@ -97,6 +97,8 @@ void _handleCheckout() async {
   try {
     // Get the generated order ID after handling checkout
     final String? orderId = await handleCheckout(context, widget.cartItems);
+    
+    if (!mounted) return;  // Add mounted check
 
     if (orderId != null) {
       // Show success animation and navigate to status page with the generated orderId
@@ -111,6 +113,10 @@ void _handleCheckout() async {
     if (kDebugMode) {
       print('Checkout failed: $e');
     }
+    if (!mounted) return;  // Add mounted check for error handling
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Checkout error: $e')),
+    );
   }
 }
 
@@ -158,11 +164,14 @@ void _showOrderSuccessAnimation(String orderId) {
 
   // Close the dialog after a delay and navigate to the StatusPage.
   Future.delayed(const Duration(seconds: 3), () {
+    if (!mounted) return;  // Add mounted check
+    
     Navigator.of(context).pop(); // Close the dialog
+    
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => StatusPage(orderId: orderId), // Use the returned orderId
+        builder: (context) => StatusPage(orderId: orderId),
       ),
     );
   });

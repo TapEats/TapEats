@@ -52,7 +52,7 @@ class CustomTextField extends StatelessWidget {
             ),
           ),
           filled: true,
-          fillColor: Colors.black.withOpacity(0.5), // Background color
+          fillColor: Colors.black.withAlpha(128), // Background color
         ),
         style: TextStyle(color: Colors.white), // Text color
       ),

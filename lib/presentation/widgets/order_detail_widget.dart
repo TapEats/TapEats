@@ -53,7 +53,7 @@ class OrderDetailWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withAlpha(51),
             blurRadius: 10,
             spreadRadius: 2,
           ),
@@ -148,7 +148,7 @@ class OrderDetailWidget extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
+                        color: Colors.black.withAlpha(38),
                         blurRadius: 8,
                         spreadRadius: 2,
                       ),
