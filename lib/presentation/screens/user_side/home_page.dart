@@ -7,7 +7,6 @@ import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
 import 'package:tapeats/presentation/screens/user_side/status_page.dart';
 import 'package:tapeats/presentation/widgets/add_button.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
-import 'package:tapeats/presentation/widgets/footer_widget.dart';
 import 'package:tapeats/presentation/widgets/minus_button.dart';
 import 'package:tapeats/presentation/widgets/plus_button.dart';
 import 'package:tapeats/presentation/widgets/search_bar.dart';
@@ -15,8 +14,8 @@ import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
 
 class HomePage extends StatefulWidget {
-  final int selectedIndex;
-  const HomePage({super.key, required this.selectedIndex});
+
+  const HomePage({super.key});
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -225,9 +224,6 @@ if (activeOrder != null) _buildActiveOrderWidget(activeOrder!),
           ],
         ),
       ),
-      bottomNavigationBar: Hero(
-          tag: 'footerHero',
-          child: CustomFooter(selectedIndex: widget.selectedIndex)),
     );
   }
 

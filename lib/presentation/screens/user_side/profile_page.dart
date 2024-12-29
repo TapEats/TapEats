@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:tapeats/presentation/widgets/footer_widget.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 
 class ProfilePage extends StatefulWidget {
-  final int selectedIndex;
-  const ProfilePage({super.key, required this.selectedIndex});
+  const ProfilePage({super.key});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -113,10 +111,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: Hero(
-        tag: 'footerHero',
-        child: CustomFooter(selectedIndex: widget.selectedIndex),
       ),
     );
   }
