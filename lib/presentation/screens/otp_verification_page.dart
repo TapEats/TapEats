@@ -83,25 +83,27 @@ Future<String> _fetchUserRole(String phoneNumber) async {
   return response['role'] as String; // Return the role as a string
 }
 
-  // Logic to handle OTP verification
+// Logic to handle OTP verification
 Future<void> verifyOtp() async {
   String otp = '${otpController1.text}${otpController2.text}${otpController3.text}${otpController4.text}';
   
   try {
     // Verify the OTP
     await _otpService.verifyOtp(widget.phoneNumber, otp);
+    if (!mounted) return;  // Add mounted check after first async operation
+    
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('OTP verified successfully')));
 
     // Insert the user data into the database if it doesn't exist
-    await _upsertUser(widget.phoneNumber, widget.username); // Pass the username
+    await _upsertUser(widget.phoneNumber, widget.username);
 
     // Fetch the user's role
     final userRole = await _fetchUserRole(widget.phoneNumber);
+    if (!mounted) return;  // Add mounted check after fetching user role
 
     // Navigate to the correct home page based on the role
     if (userRole == 'customer') {
-      // Navigate to HomePage for customers
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -109,26 +111,28 @@ Future<void> verifyOtp() async {
         ),
       );
     } else if (userRole == 'restaurant_owner') {
-      // Navigate to RestaurantHomePage for restaurant owners
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => RestaurantHomePage(selectedIndex: widget.selectedIndex), // Replace with your RestaurantHomePage widget
+          builder: (context) => RestaurantHomePage(selectedIndex: widget.selectedIndex),
         ),
       );
     } else {
-      throw Exception('Unknown user role');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unknown user role')),
+      );
     }
   } catch (e) {
     if (kDebugMode) {
       print('Error verifying OTP or navigating based on role: $e');
     }
+    if (!mounted) return;  // Add mounted check for error case
+    
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Failed to verify OTP or fetch user role')),
     );
   }
 }
-
 
   Future<void> _upsertUser(String phoneNumber, String username) async {
     final supabase = Supabase.instance.client;
@@ -180,24 +184,29 @@ Future<void> verifyOtp() async {
   }
 
 // Logic for handling resend OTP
-  Future<void> resendOtp() async {
-    if (!_isResendAllowed) return;
+Future<void> resendOtp() async {
+  if (!_isResendAllowed) return;
 
-    try {
-      await _otpService.sendOtp(widget.phoneNumber);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('OTP has been resent')));
+  try {
+    await _otpService.sendOtp(widget.phoneNumber);
+    if (!mounted) return;  // Add mounted check
+    
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('OTP has been resent')));
 
-      // Start the cooldown after sending OTP
-      startResendCooldown();
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error resending OTP: $e');
-      }
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Failed to resend OTP')));
+    // Start the cooldown after sending OTP
+    startResendCooldown();
+  } catch (e) {
+    if (kDebugMode) {
+      print('Error resending OTP: $e');
     }
+    if (!mounted) return;  // Add mounted check for error case
+    
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Failed to resend OTP')));
   }
+}
+
 
 // Start the cooldown for resending OTP
   void startResendCooldown() {
@@ -243,7 +252,7 @@ Future<void> verifyOtp() async {
             ? [
                 BoxShadow(
                   color: Colors.black
-                      .withOpacity(0.25), // Inner shadow for empty boxes
+                      .withAlpha(64), // Inner shadow for empty boxes
                   offset: const Offset(0, 0),
                   blurRadius: 10,
                   spreadRadius: 0,

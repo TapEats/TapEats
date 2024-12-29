@@ -82,7 +82,7 @@ class _SliderButtonState extends State<SliderButton> {
           borderRadius: BorderRadius.circular(sliderRadius),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withAlpha(64),
               offset: const Offset(0, 0),
               blurRadius: 10,
             ),

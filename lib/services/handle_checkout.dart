@@ -1,16 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart'; // For generating UUID if needed
+import 'package:uuid/uuid.dart';
 
 Future<String?> handleCheckout(BuildContext context, Map<String, int> cartItems) async {
   final supabase = Supabase.instance.client;
 
   try {
-    // 1. Fetch current user details (assumes user is logged in and has an id)
+    // 1. Fetch current user details
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) {
-      throw Exception('User is not logged in.');
+      if (!context.mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User is not logged in.')),
+      );
+      return null;
     }
 
     final userResponse = await supabase
@@ -20,7 +24,11 @@ Future<String?> handleCheckout(BuildContext context, Map<String, int> cartItems)
         .single();
 
     if (userResponse.isEmpty) {
-      throw Exception('Error fetching user details.');
+      if (!context.mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error fetching user details.')),
+      );
+      return null;
     }
 
     final userName = userResponse['username'];
@@ -31,38 +39,49 @@ Future<String?> handleCheckout(BuildContext context, Map<String, int> cartItems)
     List<Map<String, dynamic>> orderItems = [];
 
     for (var entry in cartItems.entries) {
-      final response = await supabase
-          .from('menu')
-          .select('menu_id, name, price, category, rating, cooking_time, image_url')
-          .eq('name', entry.key)
-          .single();
+      try {
+        final response = await supabase
+            .from('menu')
+            .select('menu_id, name, price, category, rating, cooking_time, image_url')
+            .eq('name', entry.key)
+            .single();
 
-      if (response.isEmpty) {
-        throw Exception('Error fetching menu item.');
+        if (response.isEmpty) {
+          if (!context.mounted) return null;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error fetching menu item: ${entry.key}')),
+          );
+          return null;
+        }
+
+        final menuItem = response;
+        final quantity = entry.value;
+        final price = (menuItem['price'] as num) * quantity;
+
+        orderItems.add({
+          "menu_id": menuItem['menu_id'],
+          "name": menuItem['name'],
+          "price": menuItem['price'],
+          "category": menuItem['category'],
+          "rating": menuItem['rating'],
+          "cooking_time": menuItem['cooking_time'],
+          "image_url": menuItem['image_url'],
+          "quantity": quantity,
+          "status": "Received"
+        });
+
+        totalPrice += price;
+      } catch (e) {
+        if (!context.mounted) return null;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error processing item ${entry.key}: $e')),
+        );
+        return null;
       }
-
-      final menuItem = response;
-      final quantity = entry.value;
-      final price = (menuItem['price'] as num) * quantity;
-
-      // Adding the items to order items list in required format
-      orderItems.add({
-        "menu_id": menuItem['menu_id'],
-        "name": menuItem['name'],
-        "price": menuItem['price'],
-        "category": menuItem['category'],
-        "rating": menuItem['rating'],
-        "cooking_time": menuItem['cooking_time'],
-        "image_url": menuItem['image_url'],
-        "quantity": quantity,
-        "status": "Received" // Initial status
-      });
-
-      totalPrice += price;
     }
 
-    // 3. Insert the order into the 'orders' table
-    final orderId = const Uuid().v4(); // Generating UUID for order ID
+    // 3. Insert the order
+    final orderId = const Uuid().v4();
     final orderTime = DateTime.now().toUtc().toIso8601String();
 
     await supabase.from('orders').insert({
@@ -70,23 +89,22 @@ Future<String?> handleCheckout(BuildContext context, Map<String, int> cartItems)
       "username": userName,
       "user_number": phoneNumber,
       "order_time": orderTime,
-      "items": orderItems, // Insert as JSONB
+      "items": orderItems,
       "total_price": totalPrice,
-      "status": "Received" // Initial order status
+      "status": "Received"
     });
 
-    // Successfully inserted the order
     if (kDebugMode) {
       print("Order placed successfully!");
     }
 
-    // Return the order ID to use in the cart page
     return orderId;
 
   } catch (e) {
     if (kDebugMode) {
       print('Checkout failed: $e');
     }
+    if (!context.mounted) return null;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Checkout failed: $e')),
     );

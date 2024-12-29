@@ -67,28 +67,38 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
   Future<void> _navigateBasedOnUserRole() async {
     final user = supabase.auth.currentUser;
 
-    if (user != null) {
-      final userRole = await _fetchUserRole(user.phone!);
+if (user != null) {
+  try {
+    final userRole = await _fetchUserRole(user.phone!);
+    
+    if (!mounted) return;
 
-      if (userRole == 'customer') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const MainScreen(),
-          ),
-        );
-      } else if (userRole == 'restaurant_owner') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                RestaurantHomePage(selectedIndex: 0), // Replace with your page
-          ),
-        );
-      } else {
-        throw Exception('Unknown user role');
-      }
+    if (userRole == 'customer') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const MainScreen(),
+        ),
+      );
+    } else if (userRole == 'restaurant_owner') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => RestaurantHomePage(selectedIndex: 0),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unknown user role')),
+      );
     }
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: ${e.toString()}')),
+    );
+  }
+}
   }
 
   // Fetch user role from the database
