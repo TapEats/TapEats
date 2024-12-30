@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tapeats/presentation/state_management/cart_state.dart';
+import 'package:tapeats/presentation/state_management/slider_state.dart';
 import 'package:tapeats/utils/env_loader.dart';
 import 'presentation/screens/splash_screen.dart';
+
+// Add RouteObserver instance at the top level
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +29,15 @@ Future<void> main() async {
     anonKey: supabaseAnonKey,
   );
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CartState()),
+        ChangeNotifierProvider(create: (_) => SliderState()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -36,8 +50,14 @@ class MyApp extends StatelessWidget {
       title: 'TapEats',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: Colors.black,
       ),
-      home: const SplashScreen(selectedIndex: 0), // Set the SplashScreen as the initial screen
+      navigatorObservers: [routeObserver],
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashScreen(selectedIndex: 0),
+        // Add other routes as needed
+      },
     );
   }
 }

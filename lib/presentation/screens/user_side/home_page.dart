@@ -2,9 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
 import 'package:tapeats/presentation/screens/user_side/status_page.dart';
+import 'package:tapeats/presentation/state_management/cart_state.dart';
+import 'package:tapeats/presentation/state_management/slider_state.dart';
 import 'package:tapeats/presentation/widgets/add_button.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/minus_button.dart';
@@ -12,21 +15,19 @@ import 'package:tapeats/presentation/widgets/plus_button.dart';
 import 'package:tapeats/presentation/widgets/search_bar.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
+import 'package:tapeats/main.dart' show routeObserver;
 
 class HomePage extends StatefulWidget {
-
   const HomePage({super.key});
+  
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with RouteAware {
   final SupabaseClient supabase = Supabase.instance.client;
-  Map<String, int> cartItems =
-      {}; // This will store item names and their quantities
-  int totalItems = 0; // Total number of items in the cart
   final TextEditingController _searchController = TextEditingController();
-  String searchQuery = ''; // Stores the search input
+  String searchQuery = '';
 
   List<dynamic> menuItems = [];
   List<String> categories = [];
@@ -38,6 +39,27 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _fetchMenuData();
     _checkForActiveOrder();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    super.didPopNext();
+    _checkForActiveOrder();
+    // Reset both slider and cart states when returning to this page
+    Provider.of<SliderState>(context, listen: false).resetAllSliders();
   }
 
   Future<void> _checkForActiveOrder() async {
@@ -101,130 +123,130 @@ Future<Map<String, dynamic>?> _fetchActiveOrder() async {
 }
 
 
-
   void _selectCategory(String category) {
     setState(() {
       if (selectedCategory == category) {
-        selectedCategory = ''; // Unselect the category
+        selectedCategory = '';
       } else {
-        selectedCategory = category; // Select the new category
+        selectedCategory = category;
       }
     });
   }
 
   void _addItemToCart(String itemName) {
-    setState(() {
-      if (cartItems.containsKey(itemName)) {
-        cartItems[itemName] = cartItems[itemName]! + 1;
-      } else {
-        cartItems[itemName] = 1;
-      }
-      totalItems += 1; // Update total items in the cart
-      if (kDebugMode) {
-        print("Added $itemName, total items: $totalItems");
-      } // Debug print
-    });
+    Provider.of<CartState>(context, listen: false).addItem(itemName);
   }
 
   void _removeItemFromCart(String itemName) {
-    setState(() {
-      if (cartItems.containsKey(itemName) && cartItems[itemName]! > 0) {
-        cartItems[itemName] = cartItems[itemName]! - 1;
-        totalItems -= 1;
-        if (cartItems[itemName] == 0) {
-          cartItems.remove(itemName);
-        }
-      }
-      if (kDebugMode) {
-        print("Removed $itemName, total items: $totalItems");
-      } // Debug print
-    });
+    Provider.of<CartState>(context, listen: false).removeItem(itemName);
   }
 
   void _openSideMenu() {
-    setState(() {});
     Navigator.of(context).push(
       PageRouteBuilder(
-        opaque: false, // Keep the background semi-transparent
+        opaque: false,
         pageBuilder: (_, __, ___) => const SideMenuOverlay(),
       ),
     );
   }
 
-  void _onSlideToCheckout() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CartPage(
-          cartItems: cartItems,
-          totalItems: totalItems,
-        ),
+void _onSlideToCheckout() {
+  final cartState = Provider.of<CartState>(context, listen: false);
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => CartPage(
+        cartItems: cartState.cartItems,  // Changed from getItems()
+        totalItems: cartState.totalItems, // Changed from getTotal()
       ),
-    );
-  }
+      settings: const RouteSettings(name: '/cart'),
+    ),
+  ).then((_) {
+    if (mounted) {
+      _checkForActiveOrder();
+    }
+  });
+}
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF151611),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header Widget with fixed location icon
-            HeaderWidget(
-              leftIcon: Iconsax.user,
-              onLeftButtonPressed: () {},
-              headingText: 'Vadodara',
-              headingIcon: Iconsax.location,
-              rightIcon: Iconsax.menu_1,
-              onRightButtonPressed: _openSideMenu,
-            ),
-            const SizedBox(height: 20),
-            // "Fuel Your Flavor Adventure" Text with Image of Macarons
-            _buildFlavorAdventureSection(),
-            const SizedBox(height: 10),
-            // Search bar widget
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: CustomSearchBar(
-                controller: _searchController,
-                hintText: 'Find your cravings',
-                onSearch: () {
-                  setState(() {
-                    searchQuery =
-                        _searchController.text; // Update the search query
-                  });
-                },
+        final screenWidth = MediaQuery.of(context).size.width;
+final screenHeight = MediaQuery.of(context).size.height;
+// return LayoutBuilder(
+//     builder: (context, constraints) {
+//       if (kDebugMode) {
+//         print('Page ID: home_cart');
+//         print('Layout Constraints:');
+//         print('  Max width: ${constraints.maxWidth}');
+//         print('  Max height: ${constraints.maxHeight}');
+//         print('  Min width: ${constraints.minWidth}');
+//         print('  Min height: ${constraints.minHeight}');
+//       }
+    return PopScope(
+      canPop: true,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF151611),
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              HeaderWidget(
+                leftIcon: Iconsax.user,
+                onLeftButtonPressed: () {},
+                headingText: 'Vadodara',
+                headingIcon: Iconsax.location,
+                rightIcon: Iconsax.menu_1,
+                onRightButtonPressed: _openSideMenu,
               ),
-            ),
-            const SizedBox(height: 10),
-            // Categories (fetched from the menu table)
-            _buildCategoryButtons(),
-            const SizedBox(height: 10),
-            // Food Menu Scrollable Items
-            _buildMenuItems(),
-            const SizedBox(height: 10),
-
-            // Slider Button widget for cart or other action
-
-            if (totalItems > 0)
-              // Only show SliderButton when there are items in the cart
+              const SizedBox(height: 20),
+              _buildFlavorAdventureSection(),
+              const SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: SliderButton(
-                  labelText: 'Cart',
-                  subText: '$totalItems items',
-                  onSlideComplete: _onSlideToCheckout,
+                child: CustomSearchBar(
+                  controller: _searchController,
+                  hintText: 'Find your cravings',
+                  onSearch: () {
+                    setState(() {
+                      searchQuery = _searchController.text;
+                    });
+                  },
                 ),
               ),
+              const SizedBox(height: 10),
+              _buildCategoryButtons(),
+              const SizedBox(height: 10),
+              _buildMenuItems(),
+              const SizedBox(height: 10),
 
-if (activeOrder != null) _buildActiveOrderWidget(activeOrder!),
-            const SizedBox(height: 20),
-          ],
+              Consumer<CartState>(
+                builder: (context, cartState, child) {
+                  return cartState.totalItems > 0
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: SliderButton(
+                            key: const ValueKey('home_cart_slider'),
+                            labelText: 'Cart',
+                            subText: '${cartState.totalItems} items',
+                            onSlideComplete: _onSlideToCheckout,
+                            pageId: 'home_cart',
+                            width: screenWidth * 0.8,  // Explicitly set the width
+                            height: screenHeight * 0.07,  // Explicitly set the height
+                          ),
+                        )
+                      : const SizedBox.shrink();
+                },
+              ),
+
+              if (activeOrder != null) _buildActiveOrderWidget(activeOrder!),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );
+  // },
+  // );
   }
 
   Widget _buildFlavorAdventureSection() {
@@ -328,8 +350,7 @@ if (activeOrder != null) _buildActiveOrderWidget(activeOrder!),
 
   Widget _buildMenuItems() {
     final filteredMenuItems = menuItems.where((item) {
-      return (selectedCategory.isEmpty ||
-              item['category'] == selectedCategory) &&
+      return (selectedCategory.isEmpty || item['category'] == selectedCategory) &&
           (searchQuery.isEmpty ||
               item['name'].toLowerCase().contains(searchQuery.toLowerCase()));
     }).toList();
@@ -382,28 +403,35 @@ if (activeOrder != null) _buildActiveOrderWidget(activeOrder!),
                               '\$${item['price'].toStringAsFixed(2)}',
                               style: const TextStyle(color: Color(0xFFD0F0C0)),
                             ),
-                            cartItems.containsKey(item['name']) &&
-                                    cartItems[item['name']]! > 0
-                                ? Row(
-                                    children: [
-                                      MinusButton(
-                                          onPressed: () => _removeItemFromCart(
-                                              item['name'])),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        '${cartItems[item['name']]}',
-                                        style: const TextStyle(
-                                            color: Color(0xFFD0F0C0)),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      PlusButton(
-                                          onPressed: () =>
-                                              _addItemToCart(item['name'])),
-                                    ],
-                                  )
-                                : AddButton(
-                                    onPressed: () =>
-                                        _addItemToCart(item['name'])),
+                            Consumer<CartState>(
+                              builder: (context, cartState, child) {
+                                return cartState.cartItems.containsKey(item['name']) &&
+                                        cartState.cartItems[item['name']]! > 0
+                                    ? Row(
+                                        children: [
+                                          MinusButton(
+                                            onPressed: () =>
+                                                _removeItemFromCart(item['name']),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            '${cartState.cartItems[item['name']]}',
+                                            style: const TextStyle(
+                                                color: Color(0xFFD0F0C0)),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          PlusButton(
+                                            onPressed: () =>
+                                                _addItemToCart(item['name']),
+                                          ),
+                                        ],
+                                      )
+                                    : AddButton(
+                                        onPressed: () =>
+                                            _addItemToCart(item['name']),
+                                      );
+                              },
+                            ),
                           ],
                         ),
                       ),

@@ -116,7 +116,7 @@ class _RestaurantHomePageState extends State<RestaurantHomePage> {
                     subText: '2 received', // The number of orders dynamically
                     onSlideComplete: () {
                       // Handle the slide completion here (e.g., navigate to orders page)
-                    },
+                    }, pageId: 'restaurant_orders',
                   ),
                 ),
                 const SizedBox(height: 20),
