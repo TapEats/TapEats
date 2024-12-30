@@ -1,8 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/user_side/status_page.dart';
+import 'package:tapeats/presentation/state_management/cart_state.dart';
+import 'package:tapeats/presentation/state_management/slider_state.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
@@ -73,126 +75,133 @@ class _CartPageState extends State<CartPage> {
   }
 
   void _removeItemFromCart(String itemName) {
-    setState(() {
-      if (widget.cartItems.containsKey(itemName)) {
-        int currentQuantity = widget.cartItems[itemName]!;
-        if (currentQuantity > 1) {
-          widget.cartItems[itemName] = currentQuantity - 1;
-        } else {
-          widget.cartItems.remove(itemName);
-        }
-
-        // Recalculate itemTotal and update the detailedCartItems list
-        itemTotal -= detailedCartItems
-            .firstWhere((item) => item['name'] == itemName)['price'];
-        detailedCartItems.removeWhere((item) => item['name'] == itemName);
-
-        _fetchCartDetails(); // Refetch details after modification
-      }
-    });
+    final cartState = Provider.of<CartState>(context, listen: false);
+    cartState.removeItem(itemName);
+    _fetchCartDetails(); // Refetch details after modification
   }
 
-  // Modified to handle the order and get the returned order ID
-void _handleCheckout() async {
-  try {
-    // Get the generated order ID after handling checkout
-    final String? orderId = await handleCheckout(context, widget.cartItems);
-    
-    if (!mounted) return;  // Add mounted check
+void _handleCheckout() {
+  if (!mounted) return;
+  
+  _showOrderSuccessDialog();
 
+  handleCheckout(context, widget.cartItems).then((String? orderId) {
+    if (!mounted) return;
+    
     if (orderId != null) {
-      // Show success animation and navigate to status page with the generated orderId
-      _showOrderSuccessAnimation(orderId);
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (!mounted) return;
+
+        // Complete all navigation first
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StatusPage(orderId: orderId),
+          ),
+        ).then((_) {
+          // Reset states after navigation is complete
+          if (mounted) {
+            Provider.of<CartState>(context, listen: false).resetCartAfterCheckout();
+            Provider.of<SliderState>(context, listen: false).resetAllSliders();
+          }
+        });
+      });
     } else {
-      // Handle failed checkout, e.g., show an error message
+      if (!mounted) return;
+      Navigator.of(context).pop(); // Remove dialog
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to place order')),
       );
     }
-  } catch (e) {
-    if (kDebugMode) {
-      print('Checkout failed: $e');
-    }
-    if (!mounted) return;  // Add mounted check for error handling
+  }).catchError((error) {
+    if (!mounted) return;
+    Navigator.of(context).pop(); // Remove dialog
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Checkout error: $e')),
-    );
-  }
-}
-
-void _showOrderSuccessAnimation(String orderId) {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) {
-      return AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Iconsax.tick_circle,
-              color: Color(0xFFD0F0C0),
-              size: 60,
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Order Successful!',
-              style: TextStyle(
-                color: Color(0xFFEEEFEF),
-                fontFamily: 'Helvetica Neue',
-                fontSize: 18,
-              ),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Redirecting to status page...',
-              style: TextStyle(
-                color: Color(0xFF8F8F8F),
-                fontFamily: 'Helvetica Neue',
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-
-  // Close the dialog after a delay and navigate to the StatusPage.
-  Future.delayed(const Duration(seconds: 3), () {
-    if (!mounted) return;  // Add mounted check
-    
-    Navigator.of(context).pop(); // Close the dialog
-    
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => StatusPage(orderId: orderId),
-      ),
+      SnackBar(content: Text('Checkout error: $error')),
     );
   });
 }
 
+void _showOrderSuccessDialog() {
+  if (!mounted) return;
+  
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    barrierColor: Colors.black.withAlpha(178),
+    builder: (BuildContext dialogContext) => AlertDialog(
+      backgroundColor: const Color(0xFF1A1A1A),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      content: const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Iconsax.tick_circle,
+            color: Color(0xFFD0F0C0),
+            size: 60,
+          ),
+          SizedBox(height: 20),
+          Text(
+            'Order Successful!',
+            style: TextStyle(
+              color: Color(0xFFEEEFEF),
+              fontFamily: 'Helvetica Neue',
+              fontSize: 18,
+            ),
+          ),
+          SizedBox(height: 10),
+          Text(
+            'Redirecting to status page...',
+            style: TextStyle(
+              color: Color(0xFF8F8F8F),
+              fontFamily: 'Helvetica Neue',
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
+
+  final screenWidth = MediaQuery.of(context).size.width;
+  final screenHeight = MediaQuery.of(context).size.height;
+  // return LayoutBuilder(
+  //   builder: (context, constraints) {
+  //     if (kDebugMode) {
+  //       print('Page ID: cart_checkout');
+  //       print('Layout Constraints:');
+  //       print('  Max width: ${constraints.maxWidth}');
+  //       print('  Max height: ${constraints.maxHeight}');
+  //       print('  Min width: ${constraints.minWidth}');
+  //       print('  Min height: ${constraints.minHeight}');
+  //     }
     return Scaffold(
       backgroundColor: const Color(0xFF151611),
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch, 
           children: [
-            HeaderWidget(
-              leftIcon: Iconsax.arrow_left_1,
-              onLeftButtonPressed: () => Navigator.pop(context),
-              headingText: 'Cart',
-              headingIcon: Iconsax.book_saved,
-              rightIcon: Iconsax.menu_1,
-              onRightButtonPressed: _openSideMenu, // Open side menu
-            ),
+              HeaderWidget(
+                      leftIcon: Iconsax.arrow_left_1,
+                      onLeftButtonPressed: () { 
+                        // Reset only the cart page's slider position
+                        Provider.of<SliderState>(context, listen: false).resetSliderPosition('cart_checkout');
+                        // Also reset the home page's slider position
+                        Provider.of<SliderState>(context, listen: false).resetSliderPosition('home_cart');
+                        Navigator.pop(context);
+                      },
+                      headingText: 'Cart',
+                      headingIcon: Iconsax.book_saved,
+                      rightIcon: Iconsax.menu_1,
+                      onRightButtonPressed: _openSideMenu,
+                    ),
+
             const SizedBox(height: 20),
             Expanded(
               child: ListView.builder(
@@ -216,19 +225,28 @@ void _showOrderSuccessAnimation(String orderId) {
             const SizedBox(height: 20),
             _buildPriceSummary(),
             const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: SliderButton(
-                labelText: 'Checkout',
-                subText: '\$${totalAmount.toStringAsFixed(2)}',
-                onSlideComplete: _handleCheckout, // Call checkout handler
-              ),
-            ),
+Consumer<SliderState>(
+  builder: (context, sliderState, child) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: SliderButton(
+        labelText: 'Checkout',
+        subText: '\$${totalAmount.toStringAsFixed(2)}',
+        onSlideComplete: _handleCheckout,
+        pageId: 'cart_checkout',
+        width: screenWidth * 0.8,
+        height: screenHeight * 0.07,
+      ),
+    );
+  },
+),
             const SizedBox(height: 20),
           ],
         ),
       ),
     );
+  // },
+  // );
   }
 
   Widget _buildCartItem(

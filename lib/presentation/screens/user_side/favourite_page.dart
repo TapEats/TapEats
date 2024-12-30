@@ -117,7 +117,7 @@ class _FavouritesPageState extends State<FavouritesPage> {
                 child: SliderButton(
                   labelText: 'Cart',
                   subText: '$totalItems items',
-                  onSlideComplete: _onSlideToCheckout,
+                  onSlideComplete: _onSlideToCheckout, pageId: 'favourite_cart',
                 ),
               ),
             const SizedBox(height: 20),

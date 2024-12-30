@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tapeats/presentation/state_management/slider_state.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
+import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 
 class StatusPage extends StatefulWidget {
   final String orderId; // Order ID to fetch details
@@ -51,6 +54,14 @@ class _StatusPageState extends State<StatusPage> {
     }
   }
 
+  void _openSideMenu() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,15 +71,21 @@ class _StatusPageState extends State<StatusPage> {
           children: [
             // Header Widget
             HeaderWidget(
-              leftIcon: Iconsax.arrow_left_1,
-              onLeftButtonPressed: () => Navigator.pop(context),
-              headingText: 'Order Status',
-              headingIcon: Iconsax.bookmark,
-              rightIcon: Iconsax.menu_1,
-              onRightButtonPressed: () {
-                // Handle side menu if needed
-              },
-            ),
+  leftIcon: Iconsax.arrow_left_1,
+  onLeftButtonPressed: () {
+    final sliderState = Provider.of<SliderState>(context, listen: false);
+    // Reset both sliders
+    sliderState.setSliderState('cart_checkout', false);
+    sliderState.setSliderState('home_cart', false);
+    
+    // Navigate back to home page, removing cart page from stack
+    Navigator.popUntil(context, (route) => route.isFirst);
+  },
+  headingText: 'Order Status',
+  headingIcon: Iconsax.clock,
+  rightIcon: Iconsax.menu_1,
+  onRightButtonPressed: _openSideMenu,
+),
             const SizedBox(height: 20),
 
             // Order Info and Status Tracker
