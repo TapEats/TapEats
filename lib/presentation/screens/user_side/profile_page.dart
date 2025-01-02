@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
@@ -5,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:tapeats/data/models/user.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
+import 'package:tapeats/services/profile_image_service.dart';
 import 'package:tapeats/services/user_services.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -22,6 +24,9 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   bool isLoading = true;
   String? error;
   UserProfile? currentUser;
+  final _profileImageService = ProfileImageService();
+  String? _profileImageUrl;
+  bool _isImageLoading = false;
 
   // Text editing controllers
   final TextEditingController _nameController = TextEditingController();
@@ -80,6 +85,44 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     ));
 
     _fetchUserData();
+    _fetchProfileImage();
+  }
+
+  Future<void> _fetchProfileImage() async {
+    try {
+      final imageUrl = await _profileImageService.fetchCurrentProfileImageUrl();
+      setState(() {
+        _profileImageUrl = imageUrl;
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching profile image: $e');
+      }
+    }
+  }
+
+  // New method to handle profile image upload
+  Future<void> _handleProfileImageUpload() async {
+    setState(() {
+      _isImageLoading = true;
+    });
+
+    try {
+      final newImageUrl = await _profileImageService.pickAndUploadProfileImage();
+      if (newImageUrl != null) {
+        setState(() {
+          _profileImageUrl = newImageUrl;
+        });
+      }
+    } catch (e) {
+      if(mounted){ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update profile picture: $e')),
+      );}
+    } finally {
+      setState(() {
+        _isImageLoading = false;
+      });
+    }
   }
 
   Future<void> _fetchUserData() async {
@@ -620,19 +663,45 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                     // Profile Picture
                     Positioned(
                       top: 0,
-                      child: CircleAvatar(
-                        radius: 60,
-                        backgroundColor: const Color(0xFFD0F0C0),
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/images/cupcake.png',
-                            fit: BoxFit.cover,
-                            width: 100,
-                            height: 100,
-                          ),
-                        ),
-                      ),
-                    ),
+                      child: GestureDetector(
+                        onTap: isEditing ? _handleProfileImageUpload : null,
+                        child: Stack(
+                          children: [
+                            CircleAvatar(
+                              radius: 60,
+                              backgroundColor: const Color(0xFFD0F0C0),
+                              backgroundImage: _profileImageUrl != null 
+                                ? NetworkImage(_profileImageUrl!) 
+                                : null,
+                              child: _isImageLoading
+                                ? const CircularProgressIndicator()
+                                : (_profileImageUrl == null 
+                                    ? const Icon(Icons.person, size: 60) 
+                                    : null),
+                            ),
+                            if (isEditing)
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black26,
+                                        blurRadius: 5,
+                                      )
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Iconsax.edit,
+                                    size: 20,
+                                    color: Color(0xFFD0F0C0),
+                                  ),
+                                ),
+                              ),
+                        
                   ],
                 ),
               ),
@@ -640,6 +709,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           ],
         ),
       ),
-    );
+    ),
+          ],),),);
   }
 }
