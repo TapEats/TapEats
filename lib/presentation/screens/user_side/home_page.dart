@@ -5,9 +5,9 @@ import 'package:iconsax/iconsax.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
-import 'package:tapeats/presentation/screens/user_side/status_page.dart';
 import 'package:tapeats/presentation/state_management/cart_state.dart';
 import 'package:tapeats/presentation/state_management/slider_state.dart';
+import 'package:tapeats/presentation/widgets/active_orders_carousel.dart';
 import 'package:tapeats/presentation/widgets/add_button.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/minus_button.dart';
@@ -32,13 +32,11 @@ class _HomePageState extends State<HomePage> with RouteAware {
   List<dynamic> menuItems = [];
   List<String> categories = [];
   String selectedCategory = '';
-  Map<String, dynamic>? activeOrder;
 
   @override
   void initState() {
     super.initState();
     _fetchMenuData();
-    _checkForActiveOrder();
   }
 
   @override
@@ -57,19 +55,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
   @override
   void didPopNext() {
     super.didPopNext();
-    _checkForActiveOrder();
     // Reset both slider and cart states when returning to this page
     Provider.of<SliderState>(context, listen: false).resetAllSliders();
   }
 
-  Future<void> _checkForActiveOrder() async {
-  final fetchedOrder = await _fetchActiveOrder();
-  if (fetchedOrder != null) {
-    setState(() {
-      activeOrder = fetchedOrder; // Set the active order if it exists
-    });
-  }
-}
   /// Fetch menu items and manually extract distinct categories
   Future<void> _fetchMenuData() async {
     final response = await supabase.from('menu').select(
@@ -93,35 +82,6 @@ class _HomePageState extends State<HomePage> with RouteAware {
       }
     }
   }
-
-Future<Map<String, dynamic>?> _fetchActiveOrder() async {
-  final userPhoneNumber = Supabase.instance.client.auth.currentUser?.phone; // Get the phone number from auth
-  if (userPhoneNumber == null) return null;
-
-  try {
-    final response = await supabase
-        .from('orders')
-        .select('order_id, status')
-        .eq('user_number', userPhoneNumber)
-        .or('status.eq.Received,status.eq.Accepted,status.eq.Cooking,status.eq.Ready') // Handling multiple statuses
-        .maybeSingle(); // Use maybeSingle to avoid exceptions for multiple/no rows
-
-    if (response != null) {
-      return response; // Return the order data if found
-    } else {
-      if (kDebugMode) {
-        print('No active orders found.');
-      }
-      return null;
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      print('Error fetching order: $e');
-    }
-    return null; // Handle any errors
-  }
-}
-
 
   void _selectCategory(String category) {
     setState(() {
@@ -161,11 +121,7 @@ void _onSlideToCheckout() {
       ),
       settings: const RouteSettings(name: '/cart'),
     ),
-  ).then((_) {
-    if (mounted) {
-      _checkForActiveOrder();
-    }
-  });
+  );
 }
 
   @override
@@ -238,7 +194,7 @@ final screenHeight = MediaQuery.of(context).size.height;
                 },
               ),
 
-              if (activeOrder != null) _buildActiveOrderWidget(activeOrder!),
+              const ActiveOrdersCarousel(),
               const SizedBox(height: 20),
             ],
           ),
@@ -501,83 +457,4 @@ final screenHeight = MediaQuery.of(context).size.height;
       ),
     );
   }
-Widget _buildActiveOrderWidget(Map<String, dynamic> activeOrder) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-    child: Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      padding: const EdgeInsets.all(15),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Status', // Label for status
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Color(0xFFEEEFEF),
-                  fontWeight: FontWeight.w400,
-                  fontFamily: 'Helvetica Neue',
-                ),
-              ),
-              const SizedBox(height: 5), // Spacing between label and status
-              Text(
-                activeOrder['status'], // Display the actual status of the order
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFFEEEFEF),
-                  fontWeight: FontWeight.w300,
-                  fontFamily: 'Helvetica Neue',
-                ),
-              ),
-            ],
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => StatusPage(
-                    orderId: activeOrder['order_id'], // Pass the actual order ID
-                  ),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD0F0C0), // Green color for the button
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10), // Adjust padding
-            ),
-            child: Row(
-              children: [
-                const Text(
-                  'View',
-                  style: TextStyle(
-                    color: Color(0xFF151611),
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Helvetica Neue',
-                  ),
-                ),
-                const SizedBox(width: 5), // Space between text and image
-                Image.asset(
-                  'assets/images/cookthecook.gif', // Replace with the actual path to the image
-                  width: 24, // Adjust size to match the design
-                  height: 24,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
 }
