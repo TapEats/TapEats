@@ -3,25 +3,54 @@
 class UserProfile {
   final String? userId;
   final String? username;
-  final String? role;
-  final String? phoneNumber;
   final String? email;
+  final String? phoneNumber;
   final DateTime? dateOfBirth;
   final String? gender;
+  final String? role;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? profileImageUrl;
 
   UserProfile({
     this.userId,
     this.username,
-    this.role,
-    this.phoneNumber,
     this.email,
+    this.phoneNumber,
     this.dateOfBirth,
     this.gender,
+    this.role,
     this.createdAt,
     this.updatedAt,
+    this.profileImageUrl,
   });
+
+  // Add copyWith method:
+  UserProfile copyWith({
+    String? userId,
+    String? username,
+    String? email,
+    String? phoneNumber,
+    DateTime? dateOfBirth,
+    String? gender,
+    String? role,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? profileImageUrl,
+  }) {
+    return UserProfile(
+      userId: userId ?? this.userId,
+      username: username ?? this.username,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      gender: gender ?? this.gender,
+      role: role ?? this.role,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+    );
+  }
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
