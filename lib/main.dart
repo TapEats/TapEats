@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/state_management/cart_state.dart';
+import 'package:tapeats/presentation/state_management/navbar_state.dart';
 import 'package:tapeats/presentation/state_management/slider_state.dart';
 import 'package:tapeats/utils/env_loader.dart';
 import 'presentation/screens/splash_screen.dart';
@@ -34,6 +35,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => CartState()),
         ChangeNotifierProvider(create: (_) => SliderState()),
+        ChangeNotifierProvider(create: (_) => NavbarState()),
       ],
       child: const MyApp(),
     ),

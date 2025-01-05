@@ -77,7 +77,7 @@ if (user != null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const MainScreen(),
+          builder: (context) => MainScreen(),
         ),
       );
     } else if (userRole == 'restaurant_owner') {
