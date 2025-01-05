@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tapeats/presentation/screens/user_side/favourite_page.dart';
 import 'package:tapeats/presentation/screens/user_side/order_history_page.dart';
+import 'package:tapeats/presentation/state_management/navbar_state.dart';
+import 'package:tapeats/services/profile_image_service.dart';
+import 'package:provider/provider.dart';
+import 'package:tapeats/presentation/screens/user_side/home_page.dart';
+import 'package:tapeats/presentation/screens/user_side/menu_page.dart';
+import 'package:tapeats/presentation/screens/user_side/profile_page.dart';
 
 class SideMenuOverlay extends StatefulWidget {
   const SideMenuOverlay({super.key});
@@ -13,6 +22,9 @@ class _SideMenuOverlayState extends State<SideMenuOverlay>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Offset> _slideAnimation;
+  String? _profileImageUrl;
+  final _supabase = Supabase.instance.client;
+  final _profileImageService = ProfileImageService();
 
   @override
   void initState() {
@@ -30,6 +42,25 @@ class _SideMenuOverlayState extends State<SideMenuOverlay>
     ));
 
     _controller.forward();
+    _loadProfileImage();
+  }
+
+  Future<void> _loadProfileImage() async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId != null) {
+        final imageUrl = await _profileImageService.getProfileImageUrl(userId);
+        if (mounted) {
+          setState(() {
+            _profileImageUrl = imageUrl;
+          });
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error in _loadProfileImage: $e');
+      }
+    }
   }
 
   @override
@@ -41,6 +72,69 @@ class _SideMenuOverlayState extends State<SideMenuOverlay>
   void _closeMenu() {
     _controller.reverse().then((_) => Navigator.of(context).pop());
   }
+
+  Future<void> _handleSignOut() async {
+    try {
+      await _supabase.auth.signOut();
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/login'); // Adjust route name as needed
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error signing out: $e');
+      }
+    }
+  }
+
+void _navigateToPage(Widget page) async {
+  if (page is OrderHistoryPage) {
+    // For OrderHistoryPage, wait for animation to complete before navigation
+    await _controller.reverse();
+    if (!mounted) return;
+    
+    // Remove the overlay
+    Navigator.of(context).pop();
+    
+    // Add a small delay to ensure overlay is completely gone
+    await Future.delayed(const Duration(milliseconds: 50));
+    if (!mounted) return;
+
+    // Navigate to history page
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const OrderHistoryPage(
+          cartItems: {},
+          totalItems: 0,
+        ),
+      ),
+    );
+  } else {
+    // Wait for animation
+    await _controller.reverse();
+    if (!mounted) return;
+    
+    // Remove the overlay
+    Navigator.of(context).pop();
+    
+    // If we're currently in OrderHistoryPage, pop it first
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
+    
+    // Get the NavbarProvider and update the index
+    final navbarState = Provider.of<NavbarState>(context, listen: false);
+    
+    if (page is HomePage) {
+      navbarState.updateIndex(0);
+    } else if (page is MenuPage) {
+      navbarState.updateIndex(1);
+    } else if (page is FavouritesPage) {
+      navbarState.updateIndex(2);
+    } else if (page is ProfilePage) {
+      navbarState.updateIndex(3);
+    }
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -72,20 +166,43 @@ class _SideMenuOverlayState extends State<SideMenuOverlay>
                   child: Column(
                     children: [
                       const SizedBox(height: 50),
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 40,
-                        backgroundImage:
-                            AssetImage('assets/images/cupcake.png'),
+                        backgroundImage: _profileImageUrl != null
+                            ? NetworkImage(_profileImageUrl!)
+                            : const AssetImage('assets/images/cupcake.png') as ImageProvider,
                       ),
                       const SizedBox(height: 20),
-                      _buildMenuItem('Home', Iconsax.home),
-                      _buildMenuItem('Menu', Iconsax.book_saved),
-                      _buildMenuItem('Cart', Iconsax.shopping_cart),
-                      _buildMenuItem('Favourites', Iconsax.heart),
-                      _buildMenuItem('Status', Iconsax.timer_1),
-                      _buildMenuItem('History', Iconsax.calendar),
-                      _buildMenuItem('Profile', Iconsax.user),
-                      _buildMenuItem('Sign out', Iconsax.logout),
+                      _buildMenuItem(
+                        'Home',
+                        Iconsax.home,
+                        onTap: () => _navigateToPage(const HomePage()),
+                      ),
+                      _buildMenuItem(
+                        'Menu',
+                        Iconsax.book_saved,
+                        onTap: () => _navigateToPage(const MenuPage()),
+                      ),
+                      _buildMenuItem(
+                        'Favourites',
+                        Iconsax.heart,
+                        onTap: () => _navigateToPage(const FavouritesPage()),
+                      ),
+                      _buildMenuItem(
+                        'History',
+                        Iconsax.calendar,
+                        onTap: () => _navigateToPage(const OrderHistoryPage(cartItems: {}, totalItems: 0)),
+                      ),
+                      _buildMenuItem(
+                        'Profile',
+                        Iconsax.user,
+                        onTap: () => _navigateToPage(const ProfilePage()),
+                      ),
+                      _buildMenuItem(
+                        'Sign out',
+                        Iconsax.logout,
+                        onTap: _handleSignOut,
+                      ),
                     ],
                   ),
                 ),
@@ -97,7 +214,7 @@ class _SideMenuOverlayState extends State<SideMenuOverlay>
     );
   }
 
-  Widget _buildMenuItem(String title, IconData icon) {
+  Widget _buildMenuItem(String title, IconData icon, {VoidCallback? onTap}) {
     return ListTile(
       leading: Icon(icon, color: Colors.white),
       title: Text(
@@ -108,21 +225,7 @@ class _SideMenuOverlayState extends State<SideMenuOverlay>
           fontFamily: 'Helvetica Neue',
         ),
       ),
-      onTap: () {
-        if (title == 'History') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const OrderHistoryPage(
-                cartItems: {}, // Pass cartItems if needed
-                totalItems: 0, // Pass the total item count
-              ),
-            ),
-          );
-        } else {
-          // Handle other menu item taps if needed
-        }
-      },
+      onTap: onTap,
     );
   }
 }
