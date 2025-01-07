@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tapeats/presentation/screens/login_page.dart';
 import 'package:tapeats/presentation/state_management/cart_state.dart';
 import 'package:tapeats/presentation/state_management/navbar_state.dart';
 import 'package:tapeats/presentation/state_management/slider_state.dart';
 import 'package:tapeats/utils/env_loader.dart';
-import 'presentation/screens/splash_screen.dart';
+import 'package:tapeats/presentation/screens/splash_screen.dart';
+import 'package:tapeats/presentation/screens/user_side/main_screen.dart';
 
 // Add RouteObserver instance at the top level
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
@@ -58,7 +60,19 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(selectedIndex: 0),
-        // Add other routes as needed
+        '/auth/login': (context) => const LoginPage(),
+        '/home': (context) => MainScreen(),
+      },
+      // Handle undefined routes
+      onUnknownRoute: (settings) {
+        return MaterialPageRoute(
+          builder: (context) => const SplashScreen(selectedIndex: 0),
+        );
+      },
+      // Optional: Add onGenerateRoute for dynamic routes if needed
+      onGenerateRoute: (settings) {
+        // Handle any dynamic routes here
+        return null;
       },
     );
   }
