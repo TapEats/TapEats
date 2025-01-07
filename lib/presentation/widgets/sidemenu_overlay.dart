@@ -75,66 +75,86 @@ class _SideMenuOverlayState extends State<SideMenuOverlay>
 
   Future<void> _handleSignOut() async {
     try {
+      // First close the menu with animation
+      await _controller.reverse();
+      if (!mounted) return;
+      
+      // Remove the overlay
+      Navigator.of(context).pop();
+      
+      // Then sign out
       await _supabase.auth.signOut();
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/login'); // Adjust route name as needed
-      }
+      if (!mounted) return;
+
+      // Navigate to login using named route and clear stack
+      await Navigator.of(context).pushNamedAndRemoveUntil(
+        '/auth/login',
+        (route) => false,
+      );
     } catch (e) {
       if (kDebugMode) {
         print('Error signing out: $e');
       }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error signing out. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
-void _navigateToPage(Widget page) async {
-  if (page is OrderHistoryPage) {
-    // For OrderHistoryPage, wait for animation to complete before navigation
-    await _controller.reverse();
-    if (!mounted) return;
-    
-    // Remove the overlay
-    Navigator.of(context).pop();
-    
-    // Add a small delay to ensure overlay is completely gone
-    await Future.delayed(const Duration(milliseconds: 50));
-    if (!mounted) return;
-
-    // Navigate to history page
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const OrderHistoryPage(
-          cartItems: {},
-          totalItems: 0,
-        ),
-      ),
-    );
-  } else {
-    // Wait for animation
-    await _controller.reverse();
-    if (!mounted) return;
-    
-    // Remove the overlay
-    Navigator.of(context).pop();
-    
-    // If we're currently in OrderHistoryPage, pop it first
-    if (Navigator.of(context).canPop()) {
+  void _navigateToPage(Widget page) async {
+    if (page is OrderHistoryPage) {
+      // For OrderHistoryPage, wait for animation to complete before navigation
+      await _controller.reverse();
+      if (!mounted) return;
+      
+      // Remove the overlay
       Navigator.of(context).pop();
-    }
-    
-    // Get the NavbarProvider and update the index
-    final navbarState = Provider.of<NavbarState>(context, listen: false);
-    
-    if (page is HomePage) {
-      navbarState.updateIndex(0);
-    } else if (page is MenuPage) {
-      navbarState.updateIndex(1);
-    } else if (page is FavouritesPage) {
-      navbarState.updateIndex(2);
-    } else if (page is ProfilePage) {
-      navbarState.updateIndex(3);
+      
+      // Add a small delay to ensure overlay is completely gone
+      await Future.delayed(const Duration(milliseconds: 50));
+      if (!mounted) return;
+
+      // Navigate to history page
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const OrderHistoryPage(
+            cartItems: {},
+            totalItems: 0,
+          ),
+        ),
+      );
+    } else {
+      // Wait for animation
+      await _controller.reverse();
+      if (!mounted) return;
+      
+      // Remove the overlay
+      Navigator.of(context).pop();
+      
+      // If we're currently in OrderHistoryPage or other pushed routes, pop them
+      while (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      
+      // Get the NavbarState and update the index
+      final navbarState = Provider.of<NavbarState>(context, listen: false);
+      
+      if (page is HomePage) {
+        navbarState.updateIndex(0);
+      } else if (page is MenuPage) {
+        navbarState.updateIndex(1);
+      } else if (page is FavouritesPage) {
+        navbarState.updateIndex(2);
+      } else if (page is ProfilePage) {
+        navbarState.updateIndex(3);
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
