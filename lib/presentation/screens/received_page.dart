@@ -1,9 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/widgets/custom_footer_five_button_widget.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
-import 'package:tapeats/presentation/widgets/restaurant_order_detail_widget.dart';
+import 'package:tapeats/presentation/widgets/order_detail_widget.dart';
 
 class ReceivedOrdersPage extends StatefulWidget {
   final int selectedIndex;
@@ -15,107 +16,186 @@ class ReceivedOrdersPage extends StatefulWidget {
 
 class _ReceivedOrdersPageState extends State<ReceivedOrdersPage> {
   final SupabaseClient supabase = Supabase.instance.client;
+  List<dynamic> _orders = []; // State variable to store orders
 
-  Future<List<dynamic>> _fetchOrders() async {
-    final response = await supabase
-        .from('orders')
-        .select(
-            'username, order_id, order_time, items, total_price, user_number, status')
-        .eq('status', "received");
+  Future<void> _fetchOrders() async {
+    try {
+      // Fetching order details from the database
+      final response = await supabase
+          .from('orders')
+          .select(
+              'username, order_id, order_time, items, total_price, user_number, status')
+          .eq('status', "Received");
 
-    if (kDebugMode) {
-      print('Response data: $response');
-    }
-
-    if (response.isEmpty) {
       if (kDebugMode) {
-        print('Error fetching orders: $response');
+        print('Response: $response');
       }
-      return [];
-    }
 
-    return response as List<dynamic>;
+      // If no orders are found
+      if (response.isEmpty) {
+        if (kDebugMode) {
+          print('No orders with "Received" status');
+        }
+        setState(() {
+          _orders = [];
+        });
+        return;
+      }
+
+      // Update the state with fetched orders
+      setState(() {
+        _orders = response as List<dynamic>;
+      });
+    } catch (error) {
+      if (kDebugMode) {
+        print('Error fetching orders: $error');
+      }
+      // Ensure the state is cleared if an error occurs
+      setState(() {
+        _orders = [];
+      });
+    }
   }
 
-  void _updateOrderStatus(String orderId, String status) async {
-    await supabase
-        .from('orders')
-        .update({'status': status}).eq('order_id', orderId);
-    setState(() {}); // Refresh the UI after updating
+  Future<void> _updateOrderStatus(String orderId, String status) async {
+    try {
+      final response = await supabase
+          .from('orders')
+          .update({'status': status}).eq('order_id', orderId);
+
+      if (response.isNotEmpty) {
+        if (kDebugMode) {
+          print('Order status updated to $status');
+        }
+
+        // Refresh orders after updating the status
+        _fetchOrders();
+      } else {
+        if (kDebugMode) {
+          print('Error: Order status update failed.');
+        }
+      }
+    } catch (error) {
+      if (kDebugMode) {
+        print('Error updating order status: $error');
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    supabase.from('orders').stream(primaryKey: ['order_id']).listen((event) {
+      _fetchOrders();
+    });
+    // Subscribe to the 'orders' table for changes related to 'Received' orders
+  }
+
+  @override
+  void dispose() {
+    // Unsubscribe when the page is disposed
+    // supabase.removeSubscription(_subscription);
+    // supabase.removeChannel(_su)
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF222222),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        flexibleSpace: HeaderWidget(
-          leftIcon: Icons.arrow_back,
-          onLeftButtonPressed: () => Navigator.pop(context),
-          headingText: "Received Orders",
-          rightIcon: Icons.settings,
-          onRightButtonPressed: () {},
+      backgroundColor:
+          const Color(0xFF151611), // Background color for the scaffold
+
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            // HeaderWidget added as the first sliver
+            SliverToBoxAdapter(
+              child: HeaderWidget(
+                leftIcon: Iconsax.arrow_left_1,
+                onLeftButtonPressed: () => Navigator.pop(context),
+                headingText: "Received Orders",
+                rightIcon: Iconsax.menu_1,
+                onRightButtonPressed: () {},
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: 20),
+            ),
+            SliverFillRemaining(
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: supabase
+                    .from('orders')
+                    .stream(primaryKey: ['order_id'])
+                    .eq('status', 'Received')
+                    .map((orders) => orders.map((order) => order).toList()),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error: ${snapshot.error}',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    );
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No received orders',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }
+
+                  final orders = snapshot.data!;
+
+                  return ListView.builder(
+                    itemCount: orders.length,
+                    itemBuilder: (context, index) {
+                      final order = orders[index];
+                      final List<Map<String, dynamic>> items =
+                          List<Map<String, dynamic>>.from(order['items']);
+                      final DateTime orderTime =
+                          DateTime.parse(order['order_time']);
+
+                      return OrderDetailWidget(
+                        orderId: order['order_id'],
+                        userName: order['username'],
+                        items: items,
+                        orderTime: orderTime,
+                        status: order['status'],
+                        onCallPressed: () {
+                          if (kDebugMode) {
+                            print(
+                                "Call pressed for user: ${order['user_number']}");
+                          }
+                        },
+                        onWhatsAppPressed: () {
+                          if (kDebugMode) {
+                            print(
+                                "WhatsApp pressed for user: ${order['user_number']}");
+                          }
+                        },
+                        onAccept: () {
+                          _updateOrderStatus(order['order_id'], 'Accepted');
+                        },
+                        onCancel: () {
+                          _updateOrderStatus(order['order_id'], 'Cancelled');
+                        },
+                        isRestaurantSide: true,
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
-      body: FutureBuilder<List<dynamic>>(
-        future: _fetchOrders(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error: ${snapshot.error}',
-                style: const TextStyle(color: Colors.red),
-              ),
-            );
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-              child: Text(
-                'No received orders',
-                style: TextStyle(color: Colors.white),
-              ),
-            );
-          }
-
-          final orders = snapshot.data!;
-
-          return ListView.builder(
-            itemCount: orders.length,
-            itemBuilder: (context, index) {
-              final order = orders[index];
-              final List<dynamic> items = order['items'];
-
-              return OrderDetailWidget(
-                username: order['username'],
-                orderId: order['order_id'],
-                orderTime: order['order_time'],
-                items: items,
-                totalPrice: order['total_price'],
-                userNumber: order['user_number'],
-                onCallPressed: () {
-                  // Call user logic (e.g., initiate a phone call)
-                },
-                onMessagePressed: () {
-                  // Message user logic (e.g., open SMS)
-                },
-                onCancelPressed: () =>
-                    _updateOrderStatus(order['order_id'], 'cancelled'),
-                onAcceptPressed: () =>
-                    _updateOrderStatus(order['order_id'], 'accepted'),
-              );
-            },
-          );
-        },
-      ),
-
       bottomNavigationBar:
-          const CustomFiveFooter(selectedIndex: 1), // Your footer widget
+          const CustomFiveFooter(selectedIndex: 1), // Footer widget
     );
   }
 }
