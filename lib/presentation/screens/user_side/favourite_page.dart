@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
+import 'package:tapeats/presentation/state_management/cart_state.dart';
+import 'package:tapeats/presentation/state_management/slider_state.dart';
 import 'package:tapeats/presentation/widgets/add_button.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/minus_button.dart';
@@ -10,7 +13,6 @@ import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
 
 class FavouritesPage extends StatefulWidget {
-
   const FavouritesPage({super.key});
 
   @override
@@ -19,9 +21,6 @@ class FavouritesPage extends StatefulWidget {
 
 class _FavouritesPageState extends State<FavouritesPage> {
   final SupabaseClient supabase = Supabase.instance.client;
-  Map<String, int> cartItems =
-      {}; // This will store item names and their quantities
-  int totalItems = 0; // Total number of items in the cart
   List<dynamic> favouriteItems = [];
 
   @override
@@ -32,7 +31,7 @@ class _FavouritesPageState extends State<FavouritesPage> {
 
   Future<void> _fetchFavouritesData() async {
     final response = await supabase.from('menu').select(
-        'name, price, rating, cooking_time, image_url'); // Ensure the image_url is fetched
+        'name, price, rating, cooking_time, image_url');
 
     if (response.isNotEmpty) {
       setState(() {
@@ -44,44 +43,34 @@ class _FavouritesPageState extends State<FavouritesPage> {
   }
 
   void _addItemToCart(String itemName) {
-    setState(() {
-      if (cartItems.containsKey(itemName)) {
-        cartItems[itemName] = cartItems[itemName]! + 1;
-      } else {
-        cartItems[itemName] = 1;
-      }
-      totalItems += 1; // Update total items in the cart
-    });
+    // Use CartState provider instead of local state
+    Provider.of<CartState>(context, listen: false).addItem(itemName);
   }
 
   void _removeItemFromCart(String itemName) {
-    setState(() {
-      if (cartItems.containsKey(itemName) && cartItems[itemName]! > 0) {
-        cartItems[itemName] = cartItems[itemName]! - 1;
-        totalItems -= 1;
-        if (cartItems[itemName] == 0) {
-          cartItems.remove(itemName);
-        }
-      }
-    });
+    // Use CartState provider instead of local state
+    Provider.of<CartState>(context, listen: false).removeItem(itemName);
   }
 
   void _openSideMenu() {
     Navigator.of(context).push(
       PageRouteBuilder(
-        opaque: false, // Keep the background semi-transparent
+        opaque: false,
         pageBuilder: (_, __, ___) => const SideMenuOverlay(),
       ),
     );
   }
 
   void _onSlideToCheckout() {
+    // Get cart state from provider
+    final cartState = Provider.of<CartState>(context, listen: false);
+    
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => CartPage(
-          cartItems: cartItems,
-          totalItems: totalItems,
+          cartItems: cartState.cartItems,
+          totalItems: cartState.totalItems,
         ),
       ),
     );
@@ -89,6 +78,9 @@ class _FavouritesPageState extends State<FavouritesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
     return Scaffold(
       backgroundColor: const Color(0xFF151611),
       body: SafeArea(
@@ -110,16 +102,24 @@ class _FavouritesPageState extends State<FavouritesPage> {
             _buildFavouriteItems(),
             const SizedBox(height: 10),
 
-            // Slider Button widget for cart
-            if (totalItems > 0)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: SliderButton(
-                  labelText: 'Cart',
-                  subText: '$totalItems items',
-                  onSlideComplete: _onSlideToCheckout, pageId: 'favourite_cart',
-                ),
-              ),
+            // Consumer to listen to CartState changes
+            Consumer<CartState>(
+              builder: (context, cartState, child) {
+                return cartState.totalItems > 0
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: SliderButton(
+                          labelText: 'Cart',
+                          subText: '${cartState.totalItems} items',
+                          onSlideComplete: _onSlideToCheckout,
+                          pageId: 'favourite_cart',
+                          width: screenWidth * 0.8,
+                          height: screenHeight * 0.07,
+                        ),
+                      )
+                    : const SizedBox.shrink();
+              },
+            ),
             const SizedBox(height: 20),
           ],
         ),
@@ -172,28 +172,33 @@ class _FavouritesPageState extends State<FavouritesPage> {
                               style: const TextStyle(
                                   color: Color(0xFFD0F0C0), fontSize: 16),
                             ),
-                            cartItems.containsKey(item['name']) &&
-                                    cartItems[item['name']]! > 0
-                                ? Row(
-                                    children: [
-                                      MinusButton(
-                                          onPressed: () => _removeItemFromCart(
-                                              item['name'])),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        '${cartItems[item['name']]}',
-                                        style: const TextStyle(
-                                            color: Color(0xFFD0F0C0)),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      PlusButton(
-                                          onPressed: () =>
-                                              _addItemToCart(item['name'])),
-                                    ],
-                                  )
-                                : AddButton(
-                                    onPressed: () =>
-                                        _addItemToCart(item['name'])),
+                            // Use Consumer to listen to cart state changes
+                            Consumer<CartState>(
+                              builder: (context, cartState, child) {
+                                return cartState.cartItems.containsKey(item['name']) &&
+                                        cartState.cartItems[item['name']]! > 0
+                                    ? Row(
+                                        children: [
+                                          MinusButton(
+                                              onPressed: () => _removeItemFromCart(
+                                                  item['name'])),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            '${cartState.cartItems[item['name']]}',
+                                            style: const TextStyle(
+                                                color: Color(0xFFD0F0C0)),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          PlusButton(
+                                              onPressed: () =>
+                                                  _addItemToCart(item['name'])),
+                                        ],
+                                      )
+                                    : AddButton(
+                                        onPressed: () =>
+                                            _addItemToCart(item['name']));
+                              },
+                            ),
                           ],
                         ),
                         const SizedBox(height: 10),
