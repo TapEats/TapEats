@@ -7,7 +7,9 @@ class OrderDetailWidget extends StatelessWidget {
   final List<Map<String, dynamic>> items;
   final DateTime orderTime;
   final String status;
-  final bool showReorderButton;
+  final bool isRestaurantSide;
+  final VoidCallback? onAccept;
+  final VoidCallback? onCancel;
   final VoidCallback? onReorder;
   final VoidCallback? onCallPressed;
   final VoidCallback? onWhatsAppPressed;
@@ -19,7 +21,9 @@ class OrderDetailWidget extends StatelessWidget {
     required this.items,
     required this.orderTime,
     required this.status,
-    this.showReorderButton = false,
+    required this.isRestaurantSide,
+    this.onAccept,
+    this.onCancel,
     this.onReorder,
     this.onCallPressed,
     this.onWhatsAppPressed,
@@ -76,8 +80,7 @@ class OrderDetailWidget extends StatelessWidget {
                       style: const TextStyle(
                         color: Color(0xFFEEEFEF),
                         fontSize: 14,
-                        fontWeight: FontWeight.w400, // Adjusted font weight
-                        fontFamily: 'Helvetica Neue',
+                        fontWeight: FontWeight.w400,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -87,8 +90,7 @@ class OrderDetailWidget extends StatelessWidget {
                       style: const TextStyle(
                         color: Color(0xFFEEEFEF),
                         fontSize: 16,
-                        fontWeight: FontWeight.w400, // Adjusted font weight
-                        fontFamily: 'Helvetica Neue',
+                        fontWeight: FontWeight.w400,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -98,8 +100,7 @@ class OrderDetailWidget extends StatelessWidget {
                       style: const TextStyle(
                         color: Color(0xFFEEEFEF),
                         fontSize: 12,
-                        fontWeight: FontWeight.w300, // Adjusted font weight
-                        fontFamily: 'Helvetica Neue',
+                        fontWeight: FontWeight.w300,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -146,13 +147,6 @@ class OrderDetailWidget extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFF222222),
                     borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha(38),
-                        blurRadius: 8,
-                        spreadRadius: 2,
-                      ),
-                    ],
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,9 +170,7 @@ class OrderDetailWidget extends StatelessWidget {
                               style: const TextStyle(
                                 color: Color(0xFFEEEFEF),
                                 fontSize: 14,
-                                fontWeight:
-                                    FontWeight.w400, // Adjusted font weight
-                                fontFamily: 'Helvetica Neue',
+                                fontWeight: FontWeight.w400,
                               ),
                             ),
                             const SizedBox(height: 5),
@@ -192,9 +184,7 @@ class OrderDetailWidget extends StatelessWidget {
                                   style: const TextStyle(
                                     color: Color(0xFFEEEFEF),
                                     fontSize: 14,
-                                    fontWeight:
-                                        FontWeight.w300, // Adjusted font weight
-                                    fontFamily: 'Helvetica Neue',
+                                    fontWeight: FontWeight.w300,
                                   ),
                                 ),
                                 const SizedBox(width: 10),
@@ -206,9 +196,7 @@ class OrderDetailWidget extends StatelessWidget {
                                   style: const TextStyle(
                                     color: Color(0xFFEEEFEF),
                                     fontSize: 14,
-                                    fontWeight:
-                                        FontWeight.w300, // Adjusted font weight
-                                    fontFamily: 'Helvetica Neue',
+                                    fontWeight: FontWeight.w300,
                                   ),
                                 ),
                               ],
@@ -219,9 +207,7 @@ class OrderDetailWidget extends StatelessWidget {
                               style: const TextStyle(
                                 color: Color(0xFFEEEFEF),
                                 fontSize: 14,
-                                fontWeight:
-                                    FontWeight.w400, // Adjusted font weight
-                                fontFamily: 'Helvetica Neue',
+                                fontWeight: FontWeight.w400,
                               ),
                             ),
                           ],
@@ -236,69 +222,56 @@ class OrderDetailWidget extends StatelessWidget {
 
           const SizedBox(height: 15),
 
-          // Total Price Section and Reorder Button
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          // Action Buttons Section
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Divider(color: Color(0xFF8F8F8F), thickness: 1),
-              const SizedBox(height: 5),
+              // Total on the left
               Text(
-                'Item total: \$${_calculateItemTotal()}',
+                'Total: \$${_calculateTotal()}',
                 style: const TextStyle(
                   color: Color(0xFFEEEFEF),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w300, // Adjusted font weight
-                  fontFamily: 'Helvetica Neue',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 5),
-              Text(
-                'GST and restaurant charges: \$8',
-                style: const TextStyle(
-                  color: Color(0xFFEEEFEF),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w300, // Adjusted font weight
-                  fontFamily: 'Helvetica Neue',
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                'Platform fee: \$4',
-                style: const TextStyle(
-                  color: Color(0xFFEEEFEF),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w300, // Adjusted font weight
-                  fontFamily: 'Helvetica Neue',
-                ),
-              ),
-              const SizedBox(height: 5),
-              const Divider(color: Color(0xFF8F8F8F), thickness: 1),
-              const SizedBox(height: 5),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Total: \$${_calculateTotal()}',
-                    style: const TextStyle(
-                      color: Color(0xFFEEEFEF),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold, // Adjusted font weight
-                      fontFamily: 'Helvetica Neue',
-                    ),
+              // Spacer to separate Total and Buttons
+              const Spacer(),
+              // Buttons on the right
+              if (isRestaurantSide) ...[
+                ElevatedButton(
+                  onPressed: onAccept,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD0F0C0),
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(8),
                   ),
-                  if (showReorderButton)
-                    ElevatedButton(
-                      onPressed: onReorder,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD0F0C0),
-                        shape: const CircleBorder(),
-                        padding: const EdgeInsets.all(15),
-                      ),
-                      child:
-                          const Icon(Iconsax.repeat, color: Color(0xFF151611)),
-                    ),
-                ],
-              ),
+                  child: const Icon(Iconsax.tick_circle,
+                      size: 24, color: Color(0xFF151611)),
+                ),
+                const SizedBox(width: 5), // Spacing between buttons
+                ElevatedButton(
+                  onPressed: onCancel,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF151611),
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(8),
+                  ),
+                  child: const Icon(Iconsax.close_circle,
+                      size: 24, color: Color(0xFFD0F0C0)),
+                ),
+              ] else ...[
+                ElevatedButton(
+                  onPressed: onReorder,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD0F0C0),
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(8),
+                  ),
+                  child: const Icon(Iconsax.repeat,
+                      size: 24, color: Color(0xFF151611)),
+                ),
+              ],
             ],
           ),
         ],
@@ -306,15 +279,11 @@ class OrderDetailWidget extends StatelessWidget {
     );
   }
 
-  double _calculateItemTotal() {
+  double _calculateTotal() {
     double total = 0;
     for (var item in items) {
       total += (item['price'] as num) * (item['quantity'] as num);
     }
-    return total;
-  }
-
-  double _calculateTotal() {
-    return _calculateItemTotal() + 8 + 4; // Adding GST and Platform fee
+    return total + 8 + 4; // Adding GST and platform fee
   }
 }

@@ -183,8 +183,8 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                           orderTime: DateTime.parse(order['order_time']),
                           status: order['status'],
                           onReorder: () => _reorder(order), // Reorder logic
-                          showReorderButton:
-                              true, // Show Reorder button for history
+                          isRestaurantSide:
+                              false, // Show Reorder button for history
                         );
                       },
                     ),
@@ -233,7 +233,8 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                             ),
                           ),
                         );
-                      }, pageId: 'history_cart',
+                      },
+                      pageId: 'history_cart',
                     ),
                   ],
                 ),
