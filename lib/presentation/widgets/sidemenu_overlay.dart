@@ -122,10 +122,7 @@ class _SideMenuOverlayState extends State<SideMenuOverlay>
       // Navigate to history page
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => const OrderHistoryPage(
-            cartItems: {},
-            totalItems: 0,
-          ),
+          builder: (context) => const OrderHistoryPage(),
         ),
       );
     } else {
@@ -211,7 +208,7 @@ class _SideMenuOverlayState extends State<SideMenuOverlay>
                       _buildMenuItem(
                         'History',
                         Iconsax.calendar,
-                        onTap: () => _navigateToPage(const OrderHistoryPage(cartItems: {}, totalItems: 0)),
+                        onTap: () => _navigateToPage(const OrderHistoryPage()),
                       ),
                       _buildMenuItem(
                         'Profile',
