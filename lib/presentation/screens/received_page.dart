@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -16,99 +15,45 @@ class ReceivedOrdersPage extends StatefulWidget {
 
 class _ReceivedOrdersPageState extends State<ReceivedOrdersPage> {
   final SupabaseClient supabase = Supabase.instance.client;
-  List<dynamic> _orders = []; // State variable to store orders
-
-  Future<void> _fetchOrders() async {
-    try {
-      // Fetching order details from the database
-      final response = await supabase
-          .from('orders')
-          .select(
-              'username, order_id, order_time, items, total_price, user_number, status')
-          .eq('status', "Received");
-
-      if (kDebugMode) {
-        print('Response: $response');
-      }
-
-      // If no orders are found
-      if (response.isEmpty) {
-        if (kDebugMode) {
-          print('No orders with "Received" status');
-        }
-        setState(() {
-          _orders = [];
-        });
-        return;
-      }
-
-      // Update the state with fetched orders
-      setState(() {
-        _orders = response as List<dynamic>;
-      });
-    } catch (error) {
-      if (kDebugMode) {
-        print('Error fetching orders: $error');
-      }
-      // Ensure the state is cleared if an error occurs
-      setState(() {
-        _orders = [];
-      });
-    }
-  }
+  final List<String> _visibleStatuses = ['Received', 'Accepted', 'Cooking'];
 
   Future<void> _updateOrderStatus(String orderId, String status) async {
     try {
-      final response = await supabase
+      await supabase
           .from('orders')
           .update({'status': status}).eq('order_id', orderId);
 
-      if (response.isNotEmpty) {
-        if (kDebugMode) {
-          print('Order status updated to $status');
-        }
-
-        // Refresh orders after updating the status
-        _fetchOrders();
-      } else {
-        if (kDebugMode) {
-          print('Error: Order status update failed.');
-        }
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Status updated to $status'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 1),
+        ),
+      );
     } catch (error) {
-      if (kDebugMode) {
-        print('Error updating order status: $error');
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update status: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    supabase.from('orders').stream(primaryKey: ['order_id']).listen((event) {
-      _fetchOrders();
-    });
-    // Subscribe to the 'orders' table for changes related to 'Received' orders
-  }
-
-  @override
-  void dispose() {
-    // Unsubscribe when the page is disposed
-    // supabase.removeSubscription(_subscription);
-    // supabase.removeChannel(_su)
-    super.dispose();
+  Stream<List<Map<String, dynamic>>> _getOrdersStream() {
+    return supabase.from('orders').stream(primaryKey: ['order_id']).map(
+        (orders) => orders
+            .where((order) => _visibleStatuses.contains(order['status']))
+            .toList());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          const Color(0xFF151611), // Background color for the scaffold
-
+      backgroundColor: const Color(0xFF151611),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // HeaderWidget added as the first sliver
             SliverToBoxAdapter(
               child: HeaderWidget(
                 leftIcon: Iconsax.arrow_left_1,
@@ -118,73 +63,66 @@ class _ReceivedOrdersPageState extends State<ReceivedOrdersPage> {
                 onRightButtonPressed: () {},
               ),
             ),
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 20),
-            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
             SliverFillRemaining(
               child: StreamBuilder<List<Map<String, dynamic>>>(
-                stream: supabase
-                    .from('orders')
-                    .stream(primaryKey: ['order_id'])
-                    .eq('status', 'Received')
-                    .map((orders) => orders.map((order) => order).toList()),
+                stream: _getOrdersStream(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFFD0F0C0),
+                      ),
+                    );
                   }
+
                   if (snapshot.hasError) {
                     return Center(
                       child: Text(
                         'Error: ${snapshot.error}',
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: Color(0xFFD0F0C0)),
                       ),
                     );
                   }
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+
+                  final orders = snapshot.data ?? [];
+                  if (orders.isEmpty) {
                     return const Center(
                       child: Text(
-                        'No received orders',
-                        style: TextStyle(color: Colors.white),
+                        'No orders available',
+                        style: TextStyle(color: Color(0xFFD0F0C0)),
                       ),
                     );
                   }
 
-                  final orders = snapshot.data!;
-
                   return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: orders.length,
                     itemBuilder: (context, index) {
                       final order = orders[index];
-                      final List<Map<String, dynamic>> items =
-                          List<Map<String, dynamic>>.from(order['items']);
-                      final DateTime orderTime =
-                          DateTime.parse(order['order_time']);
-
-                      return OrderDetailWidget(
-                        orderId: order['order_id'],
-                        userName: order['username'],
-                        items: items,
-                        orderTime: orderTime,
-                        status: order['status'],
-                        onCallPressed: () {
-                          if (kDebugMode) {
-                            print(
-                                "Call pressed for user: ${order['user_number']}");
-                          }
-                        },
-                        onWhatsAppPressed: () {
-                          if (kDebugMode) {
-                            print(
-                                "WhatsApp pressed for user: ${order['user_number']}");
-                          }
-                        },
-                        onAccept: () {
-                          _updateOrderStatus(order['order_id'], 'Accepted');
-                        },
-                        onCancel: () {
-                          _updateOrderStatus(order['order_id'], 'Cancelled');
-                        },
-                        isRestaurantSide: true,
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: OrderDetailWidget(
+                          key: ValueKey(order['order_id']),
+                          orderId: order['order_id'],
+                          userName: order['username'],
+                          items:
+                              List<Map<String, dynamic>>.from(order['items']),
+                          orderTime: DateTime.parse(order['order_time']),
+                          status: order['status'],
+                          isRestaurantSide: true,
+                          currentPage: 'received_page.dart',
+                          onStatusChanged: (newStatus) async {
+                            await _updateOrderStatus(
+                                order['order_id'], newStatus);
+                          },
+                          onCallPressed: () => debugPrint(
+                              "Call pressed for ${order['user_number']}"),
+                          onWhatsAppPressed: () => debugPrint(
+                              "WhatsApp pressed for ${order['user_number']}"),
+                          onCancel: () => _updateOrderStatus(
+                              order['order_id'], 'Cancelled'),
+                        ),
                       );
                     },
                   );
@@ -194,8 +132,7 @@ class _ReceivedOrdersPageState extends State<ReceivedOrdersPage> {
           ],
         ),
       ),
-      bottomNavigationBar:
-          const CustomFiveFooter(selectedIndex: 1), // Footer widget
+      bottomNavigationBar: const CustomFiveFooter(selectedIndex: 1),
     );
   }
 }

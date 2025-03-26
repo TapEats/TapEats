@@ -56,6 +56,17 @@ class _CustomFiveFooterState extends State<CustomFiveFooter> {
                 ),
               ));
           break;
+        // case 2:
+        //   // Navigate to RestaurantHomePage
+        //   Navigator.push(
+        //       context,
+        //       MaterialPageRoute(
+        //         builder: (context) => ActiveOrdersPage(
+        //           selectedIndex:
+        //               selectedIndex, // Pass the current selected index
+        //         ),
+        //       ));
+        //   break;
 
         case 3:
           // Navigate to AddMenuPage

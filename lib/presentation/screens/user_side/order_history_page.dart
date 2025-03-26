@@ -183,8 +183,9 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                           orderTime: DateTime.parse(order['order_time']),
                           status: order['status'],
                           onReorder: () => _reorder(order), // Reorder logic
-                          isRestaurantSide:
-                              false, // Show Reorder button for history
+                          isRestaurantSide: false,
+                          currentPage:
+                              'history_page.dart', // Show Reorder button for history
                         );
                       },
                     ),

@@ -72,6 +72,10 @@ flutter:
 
   assets:
     - .env
+    - assets/icons/Received.svg
+    - assets/icons/Accepted.svg
+    - assets/icons/Cooking.svg
+    - assets/icons/Ready.svg
     - assets/images/TapEats_title.png
     - assets/images/frame.png
     - assets/images/dots.png
