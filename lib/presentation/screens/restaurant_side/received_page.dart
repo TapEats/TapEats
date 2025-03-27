@@ -16,7 +16,6 @@ class ReceivedOrdersPage extends StatefulWidget {
 
 class _ReceivedOrdersPageState extends State<ReceivedOrdersPage> {
   final SupabaseClient supabase = Supabase.instance.client;
-  List<dynamic> _orders = []; // State variable to store orders
 
   Future<void> _fetchOrders() async {
     try {
@@ -37,14 +36,12 @@ class _ReceivedOrdersPageState extends State<ReceivedOrdersPage> {
           print('No orders with "Received" status');
         }
         setState(() {
-          _orders = [];
         });
         return;
       }
 
       // Update the state with fetched orders
       setState(() {
-        _orders = response as List<dynamic>;
       });
     } catch (error) {
       if (kDebugMode) {
@@ -52,7 +49,6 @@ class _ReceivedOrdersPageState extends State<ReceivedOrdersPage> {
       }
       // Ensure the state is cleared if an error occurs
       setState(() {
-        _orders = [];
       });
     }
   }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:tapeats/presentation/screens/received_page.dart';
-import 'package:tapeats/presentation/screens/restaurant_home_page.dart';
-import 'package:tapeats/presentation/screens/rest_add_menu.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/received_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/restaurant_home_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/rest_add_menu.dart';
 
 class CustomFiveFooter extends StatefulWidget {
   final int selectedIndex; // Keep this as selectedIndex
