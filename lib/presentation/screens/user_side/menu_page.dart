@@ -83,8 +83,8 @@ class _MenuPageState extends State<MenuPage> {
   void _openSideMenu() {
     Navigator.of(context).push(
       PageRouteBuilder(
-        opaque: false,
-        pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+        opaque: false, // Keep the background semi-transparent
+        pageBuilder: (_, __, ___) => const RoleBasedSideMenu(),
       ),
     );
   }

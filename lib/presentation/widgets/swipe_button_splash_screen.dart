@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:tapeats/presentation/screens/restaurant_home_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/restaurant_home_page.dart';
 import 'package:tapeats/presentation/screens/login_page.dart';
 import 'package:tapeats/presentation/screens/user_side/main_screen.dart';
 

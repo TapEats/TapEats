@@ -108,7 +108,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
-        pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+        pageBuilder: (_, __, ___) => const RoleBasedSideMenu(),
       ),
     );
   }
