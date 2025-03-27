@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:tapeats/presentation/widgets/custom_footer_five_button_widget.dart';
+import 'package:tapeats/presentation/state_management/navbar_state.dart';
+import 'package:tapeats/presentation/widgets/footer_widget.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/order_detail_widget.dart';
 
@@ -81,6 +83,10 @@ class _ReceivedOrdersPageState extends State<ReceivedOrdersPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final navbarState = Provider.of<NavbarState>(context, listen: false);
+      navbarState.updateIndex(widget.selectedIndex);
+    });
     supabase.from('orders').stream(primaryKey: ['order_id']).listen((event) {
       _fetchOrders();
     });
@@ -190,8 +196,8 @@ class _ReceivedOrdersPageState extends State<ReceivedOrdersPage> {
           ],
         ),
       ),
-      bottomNavigationBar:
-          const CustomFiveFooter(selectedIndex: 1), // Footer widget
+    extendBody: true, // Important for curved navigation bar
+      bottomNavigationBar: const DynamicFooter(), // Using DynamicFooter instead
     );
   }
 }

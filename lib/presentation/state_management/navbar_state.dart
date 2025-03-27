@@ -38,7 +38,7 @@ class NavbarState extends ChangeNotifier {
         final userData = await _supabase
             .from('users')
             .select('role')
-            .eq('id', user.id)
+            .eq('user_id', user.id)
             .single();
         
         _userRole = userData['role'] as String?;
@@ -104,8 +104,8 @@ class NavbarState extends ChangeNotifier {
     switch (index) {
       case 0:
         return const RestaurantHomePage(selectedIndex: 0);
-      // case 1:
-      //   return const MenuViewPage();
+      case 1:
+        return const ReceivedOrdersPage(selectedIndex: 1);
       // case 2:
       //   return const TablesOverviewPage();
       // case 3:
