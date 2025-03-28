@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/login_page.dart';
 import 'package:tapeats/presentation/state_management/cart_state.dart';
+import 'package:tapeats/presentation/state_management/favorites_state.dart';
 import 'package:tapeats/presentation/state_management/navbar_state.dart';
 import 'package:tapeats/presentation/state_management/slider_state.dart';
 import 'package:tapeats/utils/env_loader.dart';
@@ -38,6 +39,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => CartState()),
         ChangeNotifierProvider(create: (_) => SliderState()),
         ChangeNotifierProvider(create: (_) => NavbarState()),
+        ChangeNotifierProvider(create: (_) => FavoritesState()),
       ],
       child: const MyApp(),
     ),

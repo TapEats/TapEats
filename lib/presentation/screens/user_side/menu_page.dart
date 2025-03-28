@@ -1,9 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
+import 'package:tapeats/presentation/state_management/cart_state.dart';
+import 'package:tapeats/presentation/state_management/favorites_state.dart';
 import 'package:tapeats/presentation/widgets/add_button.dart';
+import 'package:tapeats/presentation/widgets/favorite_button.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/minus_button.dart';
 import 'package:tapeats/presentation/widgets/plus_button.dart';
@@ -20,11 +24,8 @@ class MenuPage extends StatefulWidget {
 
 class _MenuPageState extends State<MenuPage> {
   final SupabaseClient supabase = Supabase.instance.client;
-  Map<String, int> cartItems =
-      {}; // This will store item names and their quantities
-  int totalItems = 0; // Total number of items in the cart
   final TextEditingController _searchController = TextEditingController();
-  String searchQuery = ''; // Stores the search input
+  String searchQuery = '';
 
   List<dynamic> menuItems = [];
   List<String> categories = [];
@@ -34,11 +35,18 @@ class _MenuPageState extends State<MenuPage> {
   void initState() {
     super.initState();
     _fetchMenuData();
+    Provider.of<FavoritesState>(context, listen: false).initializeFavorites();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchMenuData() async {
     final response = await supabase.from('menu').select(
-        'name, price, category, rating, cooking_time, image_url'); // Ensure the image_url is fetched
+        'menu_id, name, price, category, rating, cooking_time, image_url');
 
     if (response.isNotEmpty) {
       Set<String> uniqueCategories = {};
@@ -60,37 +68,16 @@ class _MenuPageState extends State<MenuPage> {
     setState(() {
       selectedCategory = selectedCategory == category
           ? ''
-          : category; // Toggle category selection
+          : category;
     });
   }
 
   void _addItemToCart(String itemName) {
-    setState(() {
-      if (cartItems.containsKey(itemName)) {
-        cartItems[itemName] = cartItems[itemName]! + 1;
-      } else {
-        cartItems[itemName] = 1;
-      }
-      totalItems += 1;
-      if (kDebugMode) {
-        print("Added $itemName, total items: $totalItems");
-      }
-    });
+    Provider.of<CartState>(context, listen: false).addItem(itemName);
   }
 
   void _removeItemFromCart(String itemName) {
-    setState(() {
-      if (cartItems.containsKey(itemName) && cartItems[itemName]! > 0) {
-        cartItems[itemName] = cartItems[itemName]! - 1;
-        totalItems -= 1;
-        if (cartItems[itemName] == 0) {
-          cartItems.remove(itemName);
-        }
-      }
-      if (kDebugMode) {
-        print("Removed $itemName, total items: $totalItems");
-      }
-    });
+    Provider.of<CartState>(context, listen: false).removeItem(itemName);
   }
 
   void _openSideMenu() {
@@ -103,12 +90,14 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   void _onSlideToCheckout() {
+    final cartState = Provider.of<CartState>(context, listen: false);
+    
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => CartPage(
-          cartItems: cartItems,
-          totalItems: totalItems,
+          cartItems: cartState.cartItems,
+          totalItems: cartState.totalItems,
         ),
       ),
     );
@@ -116,6 +105,9 @@ class _MenuPageState extends State<MenuPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
     return Scaffold(
       backgroundColor: const Color(0xFF151611),
       body: SafeArea(
@@ -125,11 +117,11 @@ class _MenuPageState extends State<MenuPage> {
             // Header Widget with search and cart functionality
             HeaderWidget(
               leftIcon: Iconsax.arrow_left_1,
-              onLeftButtonPressed: () => Navigator.pop(context), // Back action
+              onLeftButtonPressed: () => Navigator.pop(context),
               headingText: 'Menu',
               headingIcon: Iconsax.book_saved,
               rightIcon: Iconsax.menu_1,
-              onRightButtonPressed: _openSideMenu, // Open side menu
+              onRightButtonPressed: _openSideMenu,
             ),
             const SizedBox(height: 20),
 
@@ -156,16 +148,24 @@ class _MenuPageState extends State<MenuPage> {
             _buildMenuItems(),
             const SizedBox(height: 10),
 
-            // Slider Button widget for cart or other action
-            if (totalItems > 0)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: SliderButton(
-                  labelText: 'Cart',
-                  subText: '$totalItems items',
-                  onSlideComplete: _onSlideToCheckout, pageId: 'menu_cart',
-                ),
-              ),
+            // Consumer to listen to CartState changes
+            Consumer<CartState>(
+              builder: (context, cartState, child) {
+                return cartState.totalItems > 0
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: SliderButton(
+                          labelText: 'Cart',
+                          subText: '${cartState.totalItems} items',
+                          onSlideComplete: _onSlideToCheckout,
+                          pageId: 'menu_cart',
+                          width: screenWidth * 0.8,
+                          height: screenHeight * 0.07,
+                        ),
+                      )
+                    : const SizedBox.shrink();
+              },
+            ),
             const SizedBox(height: 20),
           ],
         ),
@@ -183,8 +183,7 @@ class _MenuPageState extends State<MenuPage> {
           Padding(
             padding: const EdgeInsets.only(right: 10.0),
             child: GestureDetector(
-              onTap: () =>
-                  _selectCategory(''), // Empty string represents all categories
+              onTap: () => _selectCategory(''),
               child: Container(
                 decoration: BoxDecoration(
                   color: selectedCategory.isEmpty
@@ -249,6 +248,31 @@ class _MenuPageState extends State<MenuPage> {
               item['name'].toLowerCase().contains(searchQuery.toLowerCase()));
     }).toList();
 
+    if (filteredMenuItems.isEmpty) {
+      return Expanded(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Iconsax.search_normal,
+                size: 48,
+                color: Colors.grey.withValues(alpha: 128),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No items found',
+                style: TextStyle(
+                  color: Colors.grey.withValues(alpha: 204),
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Expanded(
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -261,18 +285,74 @@ class _MenuPageState extends State<MenuPage> {
               decoration: BoxDecoration(
                 color: const Color(0xFF1A1A1A),
                 borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 26),
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      item['image_url'],
-                      fit: BoxFit.cover,
-                      height: 150,
-                      width: double.infinity,
-                    ),
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                        child: Image.network(
+                          item['image_url'] ?? '',
+                          fit: BoxFit.cover,
+                          height: 150,
+                          width: double.infinity,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              height: 150,
+                              color: const Color(0xFF222222),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  color: const Color(0xFFD0F0C0),
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 150,
+                              color: const Color(0xFF222222),
+                              child: const Center(
+                                child: Icon(
+                                  Iconsax.image,
+                                  color: Color(0xFFEEEFEF),
+                                  size: 40,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 128),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: FavoriteButton(
+                            menuId: item['menu_id'],
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                      ],
                   ),
                   Padding(
                     padding: const EdgeInsets.all(10.0),
@@ -280,7 +360,7 @@ class _MenuPageState extends State<MenuPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item['name'],
+                          item['name'] ?? 'Food Item',
                           style: const TextStyle(
                               color: Color(0xFFEEEFEF), fontSize: 18),
                         ),
@@ -289,32 +369,37 @@ class _MenuPageState extends State<MenuPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '\$${item['price'].toStringAsFixed(2)}',
+                              '\$${(item['price'] ?? 0).toStringAsFixed(2)}',
                               style: const TextStyle(
                                   color: Color(0xFFD0F0C0), fontSize: 16),
                             ),
-                            cartItems.containsKey(item['name']) &&
-                                    cartItems[item['name']]! > 0
-                                ? Row(
-                                    children: [
-                                      MinusButton(
-                                          onPressed: () => _removeItemFromCart(
-                                              item['name'])),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        '${cartItems[item['name']]}',
-                                        style: const TextStyle(
-                                            color: Color(0xFFD0F0C0)),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      PlusButton(
-                                          onPressed: () =>
-                                              _addItemToCart(item['name'])),
-                                    ],
-                                  )
-                                : AddButton(
-                                    onPressed: () =>
-                                        _addItemToCart(item['name'])),
+                            // Use Consumer to listen to cart state changes
+                            Consumer<CartState>(
+                              builder: (context, cartState, child) {
+                                final itemName = item['name'] ?? '';
+                                return cartState.cartItems.containsKey(itemName) &&
+                                        cartState.cartItems[itemName]! > 0
+                                    ? Row(
+                                        children: [
+                                          MinusButton(
+                                              onPressed: () => _removeItemFromCart(itemName)),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            '${cartState.cartItems[itemName]}',
+                                            style: const TextStyle(
+                                                color: Color(0xFFD0F0C0)),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          PlusButton(
+                                              onPressed: () =>
+                                                  _addItemToCart(itemName)),
+                                        ],
+                                      )
+                                    : AddButton(
+                                        onPressed: () =>
+                                            _addItemToCart(itemName));
+                              },
+                            ),
                           ],
                         ),
                         const SizedBox(height: 10),
@@ -332,7 +417,17 @@ class _MenuPageState extends State<MenuPage> {
     );
   }
 
-  Widget _buildRatingAndTime(double rating, String cookingTime) {
+  Widget _buildRatingAndTime(dynamic rating, String cookingTime) {
+    // Ensure rating is a double
+    double ratingValue = 0.0;
+    if (rating is double) {
+      ratingValue = rating;
+    } else if (rating is int) {
+      ratingValue = rating.toDouble();
+    } else if (rating is String) {
+      ratingValue = double.tryParse(rating) ?? 0.0;
+    }
+    
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF222222),
@@ -344,10 +439,10 @@ class _MenuPageState extends State<MenuPage> {
         children: [
           Row(
             children: [
-              const Icon(Iconsax.star, color: Color(0xFFEEEFEF), size: 16),
+              const Icon(Iconsax.star1, color: Color(0xFFFFD700), size: 16),
               const SizedBox(width: 5),
               Text(
-                rating.toString(),
+                ratingValue.toStringAsFixed(1),
                 style: const TextStyle(
                   color: Color(0xFFEEEFEF),
                   fontFamily: 'Helvetica Neue',
@@ -359,7 +454,7 @@ class _MenuPageState extends State<MenuPage> {
           Container(
             width: 1,
             height: 20,
-            color: const Color(0xFFEEEFEF),
+            color: const Color(0xFF444444),
           ),
           Row(
             children: [
