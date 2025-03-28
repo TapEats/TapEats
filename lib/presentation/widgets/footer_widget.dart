@@ -95,14 +95,14 @@ class DynamicFooter extends StatelessWidget {
       // Update the selected index in the provider
       navbarState.updateIndex(index);
       
-      // Get the page for this index based on the user's role
-      final page = navbarState.getPageForIndex(index);
+      // // Get the page for this index based on the user's role
+      // final page = navbarState.getPageForIndex(index);
       
-      // Navigate to the page
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => page),
-      );
+      // // Navigate to the page
+      // Navigator.pushReplacement(
+      //   context,
+      //   MaterialPageRoute(builder: (context) => page),
+      // );
     }
   }
 }

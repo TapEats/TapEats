@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/inventory_management/inventory_management_page.dart';
 
 // Import customer pages
 import 'package:tapeats/presentation/screens/user_side/home_page.dart';
@@ -106,8 +107,8 @@ class NavbarState extends ChangeNotifier {
         return const RestaurantHomePage(selectedIndex: 0);
       case 1:
         return const ReceivedOrdersPage(selectedIndex: 1);
-      // case 2:
-      //   return const TablesOverviewPage();
+      case 2:
+        return const InventoryManagementPage(selectedIndex: 2);
       // case 3:
       //   return const InventoryManagementPage();
       // case 4:
