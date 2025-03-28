@@ -17,9 +17,6 @@ import 'package:tapeats/presentation/screens/user_side/profile_page.dart';
 // Restaurant pages - common
 import 'package:tapeats/presentation/screens/restaurant_side/received_page.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/restaurant_home_page.dart';
-// import 'package:tapeats/presentation/screens/restaurant_side/dashboard_page.dart';
-// import 'package:tapeats/presentation/screens/restaurant_side/active_orders_page.dart';
-// import 'package:tapeats/presentation/screens/restaurant_side/received_orders_page.dart';
 // import 'package:tapeats/presentation/screens/restaurant_side/menu_view_page.dart';
 // import 'package:tapeats/presentation/screens/restaurant_side/tables_overview_page.dart';
 // import 'package:tapeats/presentation/screens/restaurant_side/table_orders_page.dart';
@@ -510,13 +507,13 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
   void _navigateToPage(Widget page) async {
     // Special handling for standalone pages that don't affect bottom navbar
     bool isStandalonePage = 
-        page is ReceivedOrdersPage
+        page is ReceivedOrdersPage ||
+        page is OrderHistoryPage; // Add OrderHistoryPage as a standalone page
         //  ||
         // page is ActiveOrdersPage ||
         // page is ReservationManagementPage ||
         // page is RBACManagementPage ||
         // page is SupplierManagementPage
-        ;
     
     if (isStandalonePage) {
       // Wait for animation to complete before navigation
@@ -537,11 +534,10 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
         ),
       );
     } else {
-      // Wait for animation
+      // Original code for tab pages
       await _controller.reverse();
       if (!mounted) return;
       
-      // Remove the overlay
       Navigator.of(context).pop();
       
       // If we're currently in a pushed route, pop back to main navigation
