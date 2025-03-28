@@ -94,7 +94,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     MenuItem(
       title: 'Order History',
       icon: Iconsax.calendar,
-      page: const OrderHistoryPage(),
+      page: const OrderHistoryPage(cartItems: {}, totalItems: 0),
       allowedRoles: ['customer'],
     ),
     MenuItem(
@@ -111,24 +111,24 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
       icon: Iconsax.home,
       page: const RestaurantHomePage(selectedIndex: 0),
       allowedRoles: [
-        'restaurant_owner',
-        'restaurant_manager',
-        'restaurant_chef',
+        'restaurant_owner', 
+        'restaurant_manager', 
+        'restaurant_chef', 
         'restaurant_waiter',
         'restaurant_inventory_manager',
         'restaurant_cashier'
       ],
     ),
-
+    
     // // Active Orders (For roles that manage orders)
     // MenuItem(
     //   title: 'Active Orders',
     //   icon: Iconsax.activity,
     //   page: const ActiveOrdersPage(),
     //   allowedRoles: [
-    //     'restaurant_owner',
-    //     'restaurant_manager',
-    //     'restaurant_chef',
+    //     'restaurant_owner', 
+    //     'restaurant_manager', 
+    //     'restaurant_chef', 
     //     'restaurant_waiter',
     //     'restaurant_cashier'
     //   ],
@@ -140,23 +140,22 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
       icon: Iconsax.receipt,
       page: const ReceivedOrdersPage(selectedIndex: 1),
       allowedRoles: [
-        'restaurant_owner',
-        'restaurant_manager',
-        'restaurant_chef',
+        'restaurant_owner', 
+        'restaurant_manager', 
+        'restaurant_chef', 
         'restaurant_waiter',
         'restaurant_cashier'
       ],
     ),
-
     // // Menu View (Read-only for most)
     // MenuItem(
     //   title: 'Menu',
     //   icon: Iconsax.book_1,
     //   page: const MenuViewPage(),
     //   allowedRoles: [
-    //     'restaurant_owner',
-    //     'restaurant_manager',
-    //     'restaurant_chef',
+    //     'restaurant_owner', 
+    //     'restaurant_manager', 
+    //     'restaurant_chef', 
     //     'restaurant_waiter',
     //     'restaurant_cashier'
     //   ],
@@ -168,7 +167,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //   icon: Iconsax.element_4,
     //   page: const TablesOverviewPage(),
     //   allowedRoles: [
-    //     'restaurant_owner',
+    //     'restaurant_owner', 
     //     'restaurant_manager',
     //     'restaurant_waiter'
     //   ],
@@ -180,15 +179,15 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //   icon: Iconsax.clipboard_text,
     //   page: const TableOrdersPage(),
     //   allowedRoles: [
-    //     'restaurant_owner',
+    //     'restaurant_owner', 
     //     'restaurant_manager',
     //     'restaurant_waiter',
     //     'restaurant_cashier'
     //   ],
     // ),
-
+    
     // // === OWNER & MANAGER SPECIFIC PAGES ===
-
+    
     // // Edit Menu
     // MenuItem(
     //   title: 'Edit Menu',
@@ -233,9 +232,9 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_owner'
     //   ],
     // ),
-
+    
     // // === INVENTORY MANAGER SPECIFIC ===
-
+    
     // // Stock Management
     // MenuItem(
     //   title: 'Stock',
@@ -260,9 +259,9 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_inventory_manager'
     //   ],
     // ),
-
+    
     // // === CHEF SPECIFIC ===
-
+    
     // // Kitchen Display
     // MenuItem(
     //   title: 'Kitchen Display',
@@ -286,9 +285,9 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_chef'
     //   ],
     // ),
-
+    
     // // === WAITER SPECIFIC ===
-
+    
     // // Reservation Management
     // MenuItem(
     //   title: 'Reservations',
@@ -312,9 +311,9 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_waiter'
     //   ],
     // ),
-
+    
     // // === CASHIER SPECIFIC ===
-
+    
     // // Payment Processing
     // MenuItem(
     //   title: 'Payments',
@@ -338,9 +337,9 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_cashier'
     //   ],
     // ),
-
+    
     // // === SHARED SETTINGS ===
-
+    
     // // Restaurant Profile Settings
     // MenuItem(
     //   title: 'Settings',
@@ -390,10 +389,10 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
             .select('role, username')
             .eq('user_id', user.id)
             .single();
-
+        
         final userRole = userData['role'] as String?;
         final userName = userData['username'] as String?;
-
+        
         if (mounted) {
           setState(() {
             _profileImageUrl = imageUrl;
@@ -430,27 +429,29 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     };
 
     for (var item in _filteredMenuItems) {
-      if (item.title == 'Dashboard' || item.title == 'Home') {
+      if (item.title == 'Dashboard' || 
+          item.title == 'Home') {
         _groupedMenuItems['Main']!.add(item);
-      } else if (item.title.contains('Order') ||
-          item.title == 'Kitchen Display' ||
-          item.title == 'Payments' ||
-          item.title == 'Reconciliation') {
+      } else if (item.title.contains('Order') || 
+                item.title == 'Kitchen Display' ||
+                item.title == 'Payments' ||
+                item.title == 'Reconciliation') {
         _groupedMenuItems['Orders']!.add(item);
-      } else if (item.title.contains('Menu') ||
-          item.title.contains('Table') ||
-          item.title == 'Reservations') {
+      } else if (item.title.contains('Menu') || 
+                item.title.contains('Table') ||
+                item.title == 'Reservations') {
         _groupedMenuItems['Menu & Tables']!.add(item);
-      } else if (item.title.contains('Inventory') ||
-          item.title.contains('Stock') ||
-          item.title == 'Suppliers' ||
-          item.title == 'Recipes') {
+      } else if (item.title.contains('Inventory') || 
+                item.title.contains('Stock') ||
+                item.title == 'Suppliers' ||
+                item.title == 'Recipes') {
         _groupedMenuItems['Inventory']!.add(item);
-      } else if (item.title.contains('Report') || item.title == 'Analytics') {
+      } else if (item.title.contains('Report') || 
+                item.title == 'Analytics') {
         _groupedMenuItems['Reports']!.add(item);
-      } else if (item.title == 'Settings' ||
-          item.title == 'Roles/RBAC' ||
-          item.title == 'Profile') {
+      } else if (item.title == 'Settings' || 
+                item.title == 'Roles/RBAC' ||
+                item.title == 'Profile') {
         _groupedMenuItems['Settings']!.add(item);
       } else {
         // Add to Main if doesn't fit elsewhere
@@ -507,7 +508,8 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
 
   void _navigateToPage(Widget page) async {
     // Special handling for standalone pages that don't affect bottom navbar
-    bool isStandalonePage = page is ReceivedOrdersPage
+    bool isStandalonePage = 
+        page is ReceivedOrdersPage
         //  ||
         // page is ActiveOrdersPage ||
         // page is ReservationManagementPage ||
@@ -550,11 +552,11 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
       _updateNavbarState(page);
     }
   }
-
+  
   void _updateNavbarState(Widget page) {
     // Get the NavbarState
     final navbarState = Provider.of<NavbarState>(context, listen: false);
-
+    
     if (_userRole == 'customer') {
       if (page is HomePage) {
         navbarState.updateIndex(0);
@@ -569,7 +571,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
       // Restaurant side navigation - the exact indices would depend on your NavbarState implementation
       if (page is RestaurantHomePage) {
         navbarState.updateIndex(0);
-      }
+      } 
       // else if (page is MenuViewPage || page is EditMenuPage) {
       //   navbarState.updateIndex(1);
       // } else if (page is TablesOverviewPage) {
@@ -603,8 +605,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
                   width: 280,
                   height: MediaQuery.of(context).size.height,
                   decoration: const BoxDecoration(
-                    color: Color(
-                        0xFF222222), // Consistent dark background for all roles
+                    color: Color(0xFF222222), // Consistent dark background for all roles
                     borderRadius: BorderRadius.only(
                       topRight: Radius.circular(20),
                       bottomRight: Radius.circular(20),
@@ -637,7 +638,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
                           child: Text(
                             _formatRoleForDisplay(_userRole!),
                             style: TextStyle(
-                              color: Colors.white.withAlpha(179), // 70% alpha
+                                color: Colors.white.withAlpha(179), // 70% alpha
                               fontSize: 14,
                               fontFamily: 'Helvetica Neue',
                             ),
@@ -646,14 +647,14 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
                         ),
                       const SizedBox(height: 20),
                       const Divider(color: Color(0xFF333333)),
-
+                      
                       // Menu Items Section
                       Expanded(
-                        child: _userRole?.startsWith('restaurant_') ?? false
-                            ? _buildGroupedMenuItems() // For restaurant roles
+                        child: _userRole?.startsWith('restaurant_') ?? false 
+                            ? _buildGroupedMenuItems()  // For restaurant roles
                             : _buildCustomerMenuItems(), // For customer role
                       ),
-
+                      
                       // Bottom section with sign out
                       const Divider(color: Color(0xFF333333)),
                       _buildMenuItem(
@@ -676,15 +677,13 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
   Widget _buildCustomerMenuItems() {
     return ListView(
       padding: EdgeInsets.zero,
-      children: _filteredMenuItems
-          .map(
-            (item) => _buildMenuItem(
-              item.title,
-              item.icon,
-              onTap: () => _navigateToPage(item.page),
-            ),
-          )
-          .toList(),
+      children: _filteredMenuItems.map(
+        (item) => _buildMenuItem(
+          item.title,
+          item.icon,
+          onTap: () => _navigateToPage(item.page),
+        ),
+      ).toList(),
     );
   }
 
@@ -696,8 +695,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding:
-                  const EdgeInsets.only(left: 16.0, top: 12.0, bottom: 4.0),
+              padding: const EdgeInsets.only(left: 16.0, top: 12.0, bottom: 4.0),
               child: Text(
                 entry.key,
                 style: const TextStyle(
@@ -716,7 +714,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
               ),
             ),
             const SizedBox(height: 8),
-            if (entry.key != _groupedMenuItems.keys.last)
+            if (entry.key != _groupedMenuItems.keys.last) 
               const Divider(color: Color(0xFF333333), height: 1),
           ],
         );
