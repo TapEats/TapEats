@@ -133,7 +133,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_cashier'
     //   ],
     // ),
-    
+
     // Received Orders
     MenuItem(
       title: 'Received Orders',
@@ -147,7 +147,6 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
         'restaurant_cashier'
       ],
     ),
-    
     // // Menu View (Read-only for most)
     // MenuItem(
     //   title: 'Menu',
@@ -161,7 +160,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_cashier'
     //   ],
     // ),
-    
+
     // // Tables Overview
     // MenuItem(
     //   title: 'Tables',
@@ -173,7 +172,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_waiter'
     //   ],
     // ),
-    
+
     // // Table Orders
     // MenuItem(
     //   title: 'Table Orders',
@@ -199,7 +198,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_manager'
     //   ],
     // ),
-    
+
     // // Inventory Management
     // MenuItem(
     //   title: 'Inventory',
@@ -211,7 +210,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_inventory_manager'
     //   ],
     // ),
-    
+
     // // Reports & Analytics
     // MenuItem(
     //   title: 'Reports',
@@ -223,7 +222,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_inventory_manager' // Limited reports for inventory
     //   ],
     // ),
-    
+
     // // RBAC Management (Owner only)
     // MenuItem(
     //   title: 'Roles/RBAC',
@@ -248,7 +247,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_chef' // Read-only for chef
     //   ],
     // ),
-    
+
     // // Supplier Management
     // MenuItem(
     //   title: 'Suppliers',
@@ -274,7 +273,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_chef'
     //   ],
     // ),
-    
+
     // // Recipe Management
     // MenuItem(
     //   title: 'Recipes',
@@ -300,7 +299,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_waiter'
     //   ],
     // ),
-    
+
     // // Customer Notes
     // MenuItem(
     //   title: 'Customer Notes',
@@ -326,7 +325,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_cashier'
     //   ],
     // ),
-    
+
     // // End-of-Day Reconciliation
     // MenuItem(
     //   title: 'Reconciliation',
@@ -383,7 +382,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
       if (user != null) {
         // Load profile image
         final imageUrl = await _profileImageService.getProfileImageUrl(user.id);
-        
+
         // Get user role from Supabase
         final userData = await _supabase
             .from('users')
@@ -399,12 +398,12 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
             _profileImageUrl = imageUrl;
             _userRole = userRole;
             _userName = userName;
-            
+
             // Filter menu items based on user role
             _filteredMenuItems = _allMenuItems
                 .where((item) => item.allowedRoles.contains(userRole))
                 .toList();
-            
+
             // Group menu items for restaurant roles
             if (userRole?.startsWith('restaurant_') ?? false) {
               _groupMenuItems();
@@ -479,10 +478,10 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
       // First close the menu with animation
       await _controller.reverse();
       if (!mounted) return;
-      
+
       // Remove the overlay
       Navigator.of(context).pop();
-      
+
       // Then sign out
       await _supabase.auth.signOut();
       if (!mounted) return;
@@ -517,15 +516,15 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
         // page is RBACManagementPage ||
         // page is SupplierManagementPage
         ;
-    
+
     if (isStandalonePage) {
       // Wait for animation to complete before navigation
       await _controller.reverse();
       if (!mounted) return;
-      
+
       // Remove the overlay
       Navigator.of(context).pop();
-      
+
       // Add a small delay to ensure overlay is completely gone
       await Future.delayed(const Duration(milliseconds: 50));
       if (!mounted) return;
@@ -540,15 +539,15 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
       // Wait for animation
       await _controller.reverse();
       if (!mounted) return;
-      
+
       // Remove the overlay
       Navigator.of(context).pop();
-      
+
       // If we're currently in a pushed route, pop back to main navigation
       while (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
-      
+
       // Update NavbarState based on the page
       _updateNavbarState(page);
     }
@@ -619,7 +618,8 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
                         radius: 40,
                         backgroundImage: _profileImageUrl != null
                             ? NetworkImage(_profileImageUrl!)
-                            : const AssetImage('assets/images/cupcake.png') as ImageProvider,
+                            : const AssetImage('assets/images/cupcake.png')
+                                as ImageProvider,
                       ),
                       const SizedBox(height: 10),
                       if (_userName != null)
