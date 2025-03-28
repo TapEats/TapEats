@@ -105,14 +105,15 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
   // Logic to handle reordering and adding to cart
   void _reorder(Map<String, dynamic> order) {
-    final items = List<Map<String, dynamic>>.from(order['items'] as List<dynamic>);
+    final items =
+        List<Map<String, dynamic>>.from(order['items'] as List<dynamic>);
     final cartState = Provider.of<CartState>(context, listen: false);
 
     // Add items from the selected order to the cart
     for (var item in items) {
       final itemName = item['name'] as String;
       final quantity = item['quantity'] as int;
-      
+
       // Add items to cart using CartState provider
       for (var i = 0; i < quantity; i++) {
         cartState.addItem(itemName);
@@ -135,7 +136,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFF151611),
       body: SafeArea(
@@ -177,12 +178,12 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                           orderTime: DateTime.parse(order['order_time']),
                           status: order['status'],
                           onReorder: () => _reorder(order),
-                          showReorderButton: true,
+                          isRestaurantSide: true,
                         );
                       },
                     ),
             ),
-            
+
             // Consumer to listen to CartState changes
             Consumer<CartState>(
               builder: (context, cartState, child) {
