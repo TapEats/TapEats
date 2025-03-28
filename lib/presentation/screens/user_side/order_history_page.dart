@@ -1,18 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
-import 'package:tapeats/presentation/state_management/cart_state.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
 import 'package:tapeats/presentation/widgets/order_detail_widget.dart';
 
 class OrderHistoryPage extends StatefulWidget {
+  final Map<String, int> cartItems;
+  final int totalItems;
   const OrderHistoryPage({
     super.key,
+    required this.cartItems,
+    required this.totalItems,
   });
 
   @override
@@ -22,15 +24,20 @@ class OrderHistoryPage extends StatefulWidget {
 class _OrderHistoryPageState extends State<OrderHistoryPage> {
   final SupabaseClient supabase = Supabase.instance.client;
   List<Map<String, dynamic>> orderHistoryItems = [];
+  Map<String, int> cartItems = {};
+  int totalItems = 0;
   String? userPhoneNumber;
 
   @override
   void initState() {
     super.initState();
+    cartItems = Map.from(widget.cartItems);
+    totalItems = widget.totalItems;
     _initializeUserData();
   }
 
   void _openSideMenu() {
+    setState(() {});
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false, // Keep the background semi-transparent
@@ -103,21 +110,22 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     }
   }
 
-  // Logic to handle reordering and adding to cart
+  // Logic to handle reordering and redirecting to cart
   void _reorder(Map<String, dynamic> order) {
     final items =
         List<Map<String, dynamic>>.from(order['items'] as List<dynamic>);
-    final cartState = Provider.of<CartState>(context, listen: false);
 
     // Add items from the selected order to the cart
     for (var item in items) {
       final itemName = item['name'] as String;
-      final quantity = item['quantity'] as int;
-
-      // Add items to cart using CartState provider
-      for (var i = 0; i < quantity; i++) {
-        cartState.addItem(itemName);
-      }
+      setState(() {
+        if (cartItems.containsKey(itemName)) {
+          cartItems[itemName] = cartItems[itemName]! + item['quantity'] as int;
+        } else {
+          cartItems[itemName] = item['quantity'] as int;
+        }
+        totalItems += item['quantity'] as int;
+      });
     }
 
     // Redirect to the cart page after reordering
@@ -125,8 +133,8 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
       context,
       MaterialPageRoute(
         builder: (context) => CartPage(
-          cartItems: cartState.cartItems,
-          totalItems: cartState.totalItems,
+          cartItems: cartItems,
+          totalItems: totalItems,
         ),
       ),
     );
@@ -134,9 +142,6 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
       backgroundColor: const Color(0xFF151611),
       body: SafeArea(
@@ -177,77 +182,83 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                           items: items,
                           orderTime: DateTime.parse(order['order_time']),
                           status: order['status'],
-                          onReorder: () => _reorder(order),
-                          isRestaurantSide: true,
+                          onReorder: () => _reorder(order), // Reorder logic
+                          isRestaurantSide: false,
+                          currentPage:
+                              'history_page.dart', // Show Reorder button for history
                         );
                       },
                     ),
             ),
-
-            // Consumer to listen to CartState changes
-            Consumer<CartState>(
-              builder: (context, cartState, child) {
-                return cartState.totalItems > 0
-                    ? Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1A1A1A),
-                          borderRadius: BorderRadius.circular(15),
+            if (totalItems > 0)
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Cart Items ($totalItems)',
+                          style: const TextStyle(
+                            color: Color(0xFFEEEFEF),
+                            fontSize: 18,
+                            fontFamily: 'Helvetica Neue',
+                          ),
                         ),
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Cart Items (${cartState.totalItems})',
-                                  style: const TextStyle(
-                                    color: Color(0xFFEEEFEF),
-                                    fontSize: 18,
-                                    fontFamily: 'Helvetica Neue',
-                                  ),
-                                ),
-                                // Note: Price calculation would need actual item price data
-                                // which isn't available in the cart state alone
-                                const Text(
-                                  'View in cart',
-                                  style: TextStyle(
-                                    color: Color(0xFFD0F0C0),
-                                    fontSize: 18,
-                                    fontFamily: 'Helvetica Neue',
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 15),
-                            SliderButton(
-                              labelText: 'Swipe to Cart',
-                              subText: '${cartState.totalItems} items',
-                              onSlideComplete: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => CartPage(
-                                      cartItems: cartState.cartItems,
-                                      totalItems: cartState.totalItems,
-                                    ),
-                                  ),
-                                );
-                              },
-                              pageId: 'history_cart',
-                              width: screenWidth * 0.8,
-                              height: screenHeight * 0.07,
-                            ),
-                          ],
+                        Text(
+                          '\$${_calculateTotalPrice().toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            color: Color(0xFFD0F0C0),
+                            fontSize: 18,
+                            fontFamily: 'Helvetica Neue',
+                          ),
                         ),
-                      )
-                    : const SizedBox.shrink();
-              },
-            ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    SliderButton(
+                      labelText: 'Swipe to Cart',
+                      subText: '$totalItems items',
+                      onSlideComplete: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CartPage(
+                              cartItems: cartItems,
+                              totalItems: totalItems,
+                            ),
+                          ),
+                        );
+                      },
+                      pageId: 'history_cart',
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 20),
           ],
         ),
       ),
     );
+  }
+
+  double _calculateTotalPrice() {
+    double total = 0;
+    for (final order in orderHistoryItems) {
+      final items =
+          List<Map<String, dynamic>>.from(order['items'] as List<dynamic>);
+
+      for (final item in items) {
+        if (cartItems.containsKey(item['name'])) {
+          total += (item['price'] as num) * cartItems[item['name']]!;
+        }
+      }
+    }
+    return total;
   }
 }
