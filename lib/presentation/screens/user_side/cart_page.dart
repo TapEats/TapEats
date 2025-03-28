@@ -69,7 +69,7 @@ class _CartPageState extends State<CartPage> {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false, // Keep the background semi-transparent
-        pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+        pageBuilder: (_, __, ___) => const RoleBasedSideMenu(),
       ),
     );
   }

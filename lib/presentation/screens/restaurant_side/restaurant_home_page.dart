@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
+import 'package:provider/provider.dart';
+import 'package:tapeats/presentation/state_management/navbar_state.dart';
 import 'package:tapeats/presentation/widgets/box_for_graph.dart';
-import 'package:tapeats/presentation/widgets/custom_footer_five_button_widget.dart';
+import 'package:tapeats/presentation/widgets/footer_widget.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/rectanglebox_for_graph.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
-import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart'; // Import the side menu overlay
+import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 
 class RestaurantHomePage extends StatefulWidget {
   final int selectedIndex; // Required for footer navigation
@@ -18,6 +20,16 @@ class RestaurantHomePage extends StatefulWidget {
 }
 
 class _RestaurantHomePageState extends State<RestaurantHomePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Set the initial index in the NavbarState
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final navbarState = Provider.of<NavbarState>(context, listen: false);
+      navbarState.updateIndex(widget.selectedIndex);
+    });
+  }
+
   // Function to open the profile page
   void _openProfile() {
     // Navigator.push to ProfilePage can be added here when needed.
@@ -28,7 +40,7 @@ class _RestaurantHomePageState extends State<RestaurantHomePage> {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false, // Keep the background semi-transparent
-        pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+        pageBuilder: (_, __, ___) => const RoleBasedSideMenu(),
       ),
     );
   }
@@ -137,11 +149,8 @@ class _RestaurantHomePageState extends State<RestaurantHomePage> {
         ),
       ),
 
-      // Custom Footer Section
-      bottomNavigationBar: CustomFiveFooter(
-        selectedIndex:
-            widget.selectedIndex, // Ensure the correct index is passed
-      ),
+      extendBody: true, // Important for curved navigation bar
+      bottomNavigationBar: const DynamicFooter(),
     );
   }
 }
