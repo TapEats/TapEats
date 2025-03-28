@@ -17,9 +17,6 @@ import 'package:tapeats/presentation/screens/user_side/profile_page.dart';
 // Restaurant pages - common
 import 'package:tapeats/presentation/screens/restaurant_side/received_page.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/restaurant_home_page.dart';
-// import 'package:tapeats/presentation/screens/restaurant_side/dashboard_page.dart';
-// import 'package:tapeats/presentation/screens/restaurant_side/active_orders_page.dart';
-// import 'package:tapeats/presentation/screens/restaurant_side/received_orders_page.dart';
 // import 'package:tapeats/presentation/screens/restaurant_side/menu_view_page.dart';
 // import 'package:tapeats/presentation/screens/restaurant_side/tables_overview_page.dart';
 // import 'package:tapeats/presentation/screens/restaurant_side/table_orders_page.dart';
@@ -133,7 +130,6 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_cashier'
     //   ],
     // ),
-
     // Received Orders
     MenuItem(
       title: 'Received Orders',
@@ -160,7 +156,6 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_cashier'
     //   ],
     // ),
-
     // // Tables Overview
     // MenuItem(
     //   title: 'Tables',
@@ -172,7 +167,6 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_waiter'
     //   ],
     // ),
-
     // // Table Orders
     // MenuItem(
     //   title: 'Table Orders',
@@ -198,7 +192,6 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_manager'
     //   ],
     // ),
-
     // // Inventory Management
     // MenuItem(
     //   title: 'Inventory',
@@ -210,7 +203,6 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_inventory_manager'
     //   ],
     // ),
-
     // // Reports & Analytics
     // MenuItem(
     //   title: 'Reports',
@@ -222,7 +214,6 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_inventory_manager' // Limited reports for inventory
     //   ],
     // ),
-
     // // RBAC Management (Owner only)
     // MenuItem(
     //   title: 'Roles/RBAC',
@@ -247,7 +238,6 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_chef' // Read-only for chef
     //   ],
     // ),
-
     // // Supplier Management
     // MenuItem(
     //   title: 'Suppliers',
@@ -273,7 +263,6 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_chef'
     //   ],
     // ),
-
     // // Recipe Management
     // MenuItem(
     //   title: 'Recipes',
@@ -299,7 +288,6 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_waiter'
     //   ],
     // ),
-
     // // Customer Notes
     // MenuItem(
     //   title: 'Customer Notes',
@@ -325,7 +313,6 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //     'restaurant_cashier'
     //   ],
     // ),
-
     // // End-of-Day Reconciliation
     // MenuItem(
     //   title: 'Reconciliation',
@@ -382,7 +369,6 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
       if (user != null) {
         // Load profile image
         final imageUrl = await _profileImageService.getProfileImageUrl(user.id);
-
         // Get user role from Supabase
         final userData = await _supabase
             .from('users')
@@ -398,12 +384,10 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
             _profileImageUrl = imageUrl;
             _userRole = userRole;
             _userName = userName;
-
             // Filter menu items based on user role
             _filteredMenuItems = _allMenuItems
                 .where((item) => item.allowedRoles.contains(userRole))
                 .toList();
-
             // Group menu items for restaurant roles
             if (userRole?.startsWith('restaurant_') ?? false) {
               _groupMenuItems();
@@ -509,14 +493,14 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
   void _navigateToPage(Widget page) async {
     // Special handling for standalone pages that don't affect bottom navbar
     bool isStandalonePage = 
-        page is ReceivedOrdersPage
+        page is ReceivedOrdersPage ||
+        page is OrderHistoryPage; // Add OrderHistoryPage as a standalone page
         //  ||
         // page is ActiveOrdersPage ||
         // page is ReservationManagementPage ||
         // page is RBACManagementPage ||
         // page is SupplierManagementPage
-        ;
-
+    
     if (isStandalonePage) {
       // Wait for animation to complete before navigation
       await _controller.reverse();
@@ -536,18 +520,16 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
         ),
       );
     } else {
-      // Wait for animation
+      // Original code for tab pages
       await _controller.reverse();
       if (!mounted) return;
-
-      // Remove the overlay
+      
       Navigator.of(context).pop();
-
+      
       // If we're currently in a pushed route, pop back to main navigation
       while (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
-
       // Update NavbarState based on the page
       _updateNavbarState(page);
     }
