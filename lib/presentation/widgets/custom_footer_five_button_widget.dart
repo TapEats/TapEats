@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:tapeats/presentation/screens/received_page.dart';
+import 'package:tapeats/presentation/screens/rest_edit_add_menu.dart';
+import 'package:tapeats/presentation/screens/rest_ordering_page.dart';
+import 'package:tapeats/presentation/screens/rest_table_page.dart';
 import 'package:tapeats/presentation/screens/restaurant_home_page.dart';
 import 'package:tapeats/presentation/screens/rest_add_menu.dart';
+import 'package:tapeats/presentation/screens/user_side/menu_page.dart';
 
 class CustomFiveFooter extends StatefulWidget {
   final int selectedIndex; // Keep this as selectedIndex
@@ -56,28 +60,39 @@ class _CustomFiveFooterState extends State<CustomFiveFooter> {
                 ),
               ));
           break;
-        // case 2:
-        //   // Navigate to RestaurantHomePage
-        //   Navigator.push(
-        //       context,
-        //       MaterialPageRoute(
-        //         builder: (context) => ActiveOrdersPage(
-        //           selectedIndex:
-        //               selectedIndex, // Pass the current selected index
-        //         ),
-        //       ));
-        //   break;
-
-        case 3:
-          // Navigate to AddMenuPage
+        case 2:
+          // Navigate to MenuManagementScreen
           Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => AddMenuPage(
+                builder: (context) => MenuManagementScreen(
                   selectedIndex:
                       selectedIndex, // Pass the current selected index
                 ),
               ));
+          break;
+
+        case 3:
+          // Navigate to MenuPage
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => RestMenuPage(
+                selectedIndex: selectedIndex,
+              ),
+            ),
+          );
+          break;
+        case 4:
+          // Navigate to TableManagementPage
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TableManagementScreen(
+                selectedIndex: selectedIndex, // Pass the current selected index
+              ),
+            ),
+          );
           break;
         // Add cases for other buttons if needed
         default:

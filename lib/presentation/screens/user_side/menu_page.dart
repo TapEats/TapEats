@@ -163,7 +163,8 @@ class _MenuPageState extends State<MenuPage> {
                 child: SliderButton(
                   labelText: 'Cart',
                   subText: '$totalItems items',
-                  onSlideComplete: _onSlideToCheckout, pageId: 'menu_cart',
+                  onSlideComplete: _onSlideToCheckout,
+                  pageId: 'menu_cart',
                 ),
               ),
             const SizedBox(height: 20),

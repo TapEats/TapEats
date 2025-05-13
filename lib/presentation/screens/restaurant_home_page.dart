@@ -46,7 +46,7 @@ class _RestaurantHomePageState extends State<RestaurantHomePage> {
                 HeaderWidget(
                   leftIcon: Iconsax.user,
                   onLeftButtonPressed: _openProfile, // Open profile on click
-                  headingText: 'Orders',
+                  headingText: 'Home',
                   headingIcon: Iconsax.activity, // The icon on the header
                   rightIcon: Iconsax.menu_1,
                   onRightButtonPressed:
@@ -78,7 +78,8 @@ class _RestaurantHomePageState extends State<RestaurantHomePage> {
                   child: Row(
                     children: [
                       RoundedImageBox(
-                        imageUrl: 'assets/images/box.jpg', // Example image path
+                        imageUrl:
+                            'assets/images/graph.jpg', // Example image path
                       ),
                     ],
                   ),
@@ -93,14 +94,14 @@ class _RestaurantHomePageState extends State<RestaurantHomePage> {
                       Expanded(
                         child: RoundedSquareImageBox(
                           imageUrl:
-                              'assets/images/box.jpg', // Example image path
+                              'assets/images/graph.jpg', // Example image path
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: RoundedSquareImageBox(
                           imageUrl:
-                              'assets/images/box.jpg', // Example image path
+                              'assets/images/graph.jpg', // Example image path
                         ),
                       ),
                     ],
@@ -116,7 +117,8 @@ class _RestaurantHomePageState extends State<RestaurantHomePage> {
                     subText: '2 received', // The number of orders dynamically
                     onSlideComplete: () {
                       // Handle the slide completion here (e.g., navigate to orders page)
-                    }, pageId: 'restaurant_orders',
+                    },
+                    pageId: 'restaurant_orders',
                   ),
                 ),
                 const SizedBox(height: 20),
