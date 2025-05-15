@@ -46,7 +46,8 @@ class _CartPageState extends State<CartPage> {
     for (var item in widget.cartItems.entries) {
       final response = await supabase
           .from('menu')
-          .select('menu_id, name, price, rating, cooking_time, image_url, category')
+          .select(
+              'menu_id, name, price, rating, cooking_time, image_url, category')
           .eq('name', item.key)
           .single();
 
@@ -69,7 +70,7 @@ class _CartPageState extends State<CartPage> {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false, // Keep the background semi-transparent
-        pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+        pageBuilder: (_, __, ___) => const RoleBasedSideMenu(),
       ),
     );
   }
@@ -80,128 +81,130 @@ class _CartPageState extends State<CartPage> {
     _fetchCartDetails(); // Refetch details after modification
   }
 
-void _handleCheckout() {
-  if (!mounted) return;
-  
-  _showOrderSuccessDialog();
-
-  handleCheckout(context, widget.cartItems).then((String? orderId) {
+  void _handleCheckout() {
     if (!mounted) return;
-    
-    if (orderId != null) {
-      Future.delayed(const Duration(milliseconds: 1500), () {
-        if (!mounted) return;
 
-        // Complete all navigation first
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => StatusPage(orderId: orderId),
-          ),
-        ).then((_) {
-          // Reset states after navigation is complete
-          if (mounted) {
-            Provider.of<CartState>(context, listen: false).resetCartAfterCheckout();
-            Provider.of<SliderState>(context, listen: false).resetAllSliders();
-          }
+    _showOrderSuccessDialog();
+
+    handleCheckout(context, widget.cartItems).then((String? orderId) {
+      if (!mounted) return;
+
+      if (orderId != null) {
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (!mounted) return;
+
+          // Complete all navigation first
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StatusPage(orderId: orderId),
+            ),
+          ).then((_) {
+            // Reset states after navigation is complete
+            if (mounted) {
+              Provider.of<CartState>(context, listen: false)
+                  .resetCartAfterCheckout();
+              Provider.of<SliderState>(context, listen: false)
+                  .resetAllSliders();
+            }
+          });
         });
-      });
-    } else {
+      } else {
+        if (!mounted) return;
+        Navigator.of(context).pop(); // Remove dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to place order')),
+        );
+      }
+    }).catchError((error) {
       if (!mounted) return;
       Navigator.of(context).pop(); // Remove dialog
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to place order')),
+        SnackBar(content: Text('Checkout error: $error')),
       );
-    }
-  }).catchError((error) {
-    if (!mounted) return;
-    Navigator.of(context).pop(); // Remove dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Checkout error: $error')),
-    );
-  });
-}
+    });
+  }
 
-void _showOrderSuccessDialog() {
-  if (!mounted) return;
-  
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    barrierColor: Colors.black.withAlpha(178),
-    builder: (BuildContext dialogContext) => AlertDialog(
-      backgroundColor: const Color(0xFF1A1A1A),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      content: const Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Iconsax.tick_circle,
-            color: Color(0xFFD0F0C0),
-            size: 60,
-          ),
-          SizedBox(height: 20),
-          Text(
-            'Order Successful!',
-            style: TextStyle(
-              color: Color(0xFFEEEFEF),
-              fontFamily: 'Helvetica Neue',
-              fontSize: 18,
+  void _showOrderSuccessDialog() {
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withAlpha(178),
+      builder: (BuildContext dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Iconsax.tick_circle,
+              color: Color(0xFFD0F0C0),
+              size: 60,
             ),
-          ),
-          SizedBox(height: 10),
-          Text(
-            'Redirecting to status page...',
-            style: TextStyle(
-              color: Color(0xFF8F8F8F),
-              fontFamily: 'Helvetica Neue',
-              fontSize: 14,
+            SizedBox(height: 20),
+            Text(
+              'Order Successful!',
+              style: TextStyle(
+                color: Color(0xFFEEEFEF),
+                fontFamily: 'Helvetica Neue',
+                fontSize: 18,
+              ),
             ),
-          ),
-        ],
+            SizedBox(height: 10),
+            Text(
+              'Redirecting to status page...',
+              style: TextStyle(
+                color: Color(0xFF8F8F8F),
+                fontFamily: 'Helvetica Neue',
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-
-  final screenWidth = MediaQuery.of(context).size.width;
-  final screenHeight = MediaQuery.of(context).size.height;
-  // return LayoutBuilder(
-  //   builder: (context, constraints) {
-  //     if (kDebugMode) {
-  //       print('Page ID: cart_checkout');
-  //       print('Layout Constraints:');
-  //       print('  Max width: ${constraints.maxWidth}');
-  //       print('  Max height: ${constraints.maxHeight}');
-  //       print('  Min width: ${constraints.minWidth}');
-  //       print('  Min height: ${constraints.minHeight}');
-  //     }
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    // return LayoutBuilder(
+    //   builder: (context, constraints) {
+    //     if (kDebugMode) {
+    //       print('Page ID: cart_checkout');
+    //       print('Layout Constraints:');
+    //       print('  Max width: ${constraints.maxWidth}');
+    //       print('  Max height: ${constraints.maxHeight}');
+    //       print('  Min width: ${constraints.minWidth}');
+    //       print('  Min height: ${constraints.minHeight}');
+    //     }
     return Scaffold(
       backgroundColor: const Color(0xFF151611),
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch, 
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-              HeaderWidget(
-                      leftIcon: Iconsax.arrow_left_1,
-                      onLeftButtonPressed: () { 
-                        // Reset only the cart page's slider position
-                        Provider.of<SliderState>(context, listen: false).resetSliderPosition('cart_checkout');
-                        // Also reset the home page's slider position
-                        Provider.of<SliderState>(context, listen: false).resetSliderPosition('home_cart');
-                        Navigator.pop(context);
-                      },
-                      headingText: 'Cart',
-                      headingIcon: Iconsax.book_saved,
-                      rightIcon: Iconsax.menu_1,
-                      onRightButtonPressed: _openSideMenu,
-                    ),
-
+            HeaderWidget(
+              leftIcon: Iconsax.arrow_left_1,
+              onLeftButtonPressed: () {
+                // Reset only the cart page's slider position
+                Provider.of<SliderState>(context, listen: false)
+                    .resetSliderPosition('cart_checkout');
+                // Also reset the home page's slider position
+                Provider.of<SliderState>(context, listen: false)
+                    .resetSliderPosition('home_cart');
+                Navigator.pop(context);
+              },
+              headingText: 'Cart',
+              headingIcon: Iconsax.book_saved,
+              rightIcon: Iconsax.menu_1,
+              onRightButtonPressed: _openSideMenu,
+            ),
             const SizedBox(height: 20),
             Expanded(
               child: ListView.builder(
@@ -225,28 +228,28 @@ void _showOrderSuccessDialog() {
             const SizedBox(height: 20),
             _buildPriceSummary(),
             const SizedBox(height: 20),
-Consumer<SliderState>(
-  builder: (context, sliderState, child) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: SliderButton(
-        labelText: 'Checkout',
-        subText: '\$${totalAmount.toStringAsFixed(2)}',
-        onSlideComplete: _handleCheckout,
-        pageId: 'cart_checkout',
-        width: screenWidth * 0.8,
-        height: screenHeight * 0.07,
-      ),
-    );
-  },
-),
+            Consumer<SliderState>(
+              builder: (context, sliderState, child) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: SliderButton(
+                    labelText: 'Checkout',
+                    subText: '\$${totalAmount.toStringAsFixed(2)}',
+                    onSlideComplete: _handleCheckout,
+                    pageId: 'cart_checkout',
+                    width: screenWidth * 0.8,
+                    height: screenHeight * 0.07,
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: 20),
           ],
         ),
       ),
     );
-  // },
-  // );
+    // },
+    // );
   }
 
   Widget _buildCartItem(
@@ -300,18 +303,18 @@ Consumer<SliderState>(
                   ],
                 ),
                 const SizedBox(height: 5),
-                
                 Row(
                   children: [
                     Text(
-                  '$cookingTime • ',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontFamily: 'Helvetica Neue',
-                    color: Color(0xFF8F8F8F),
-                  ),
-                ),
-                    const Icon(Iconsax.star, size: 16, color: Color(0xFFEEEFEF)),
+                      '$cookingTime • ',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'Helvetica Neue',
+                        color: Color(0xFF8F8F8F),
+                      ),
+                    ),
+                    const Icon(Iconsax.star,
+                        size: 16, color: Color(0xFFEEEFEF)),
                     const SizedBox(width: 5),
                     Text(
                       rating.toString(),
@@ -403,10 +406,12 @@ Consumer<SliderState>(
       child: Column(
         children: [
           _buildPriceRow('Item total', '\$${itemTotal.toStringAsFixed(2)}'),
-          _buildPriceRow('GST and restaurant charges', '\$${gstCharges.toStringAsFixed(2)}'),
+          _buildPriceRow('GST and restaurant charges',
+              '\$${gstCharges.toStringAsFixed(2)}'),
           _buildPriceRow('Platform fee', '\$${platformFee.toStringAsFixed(2)}'),
           const Divider(color: Color(0xFF8F8F8F)),
-          _buildPriceRow('Total', '\$${totalAmount.toStringAsFixed(2)}', isTotal: true),
+          _buildPriceRow('Total', '\$${totalAmount.toStringAsFixed(2)}',
+              isTotal: true),
         ],
       ),
     );
@@ -441,4 +446,3 @@ Consumer<SliderState>(
     );
   }
 }
-

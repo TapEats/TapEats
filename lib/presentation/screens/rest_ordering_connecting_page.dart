@@ -214,7 +214,7 @@ class _RestCartPageState extends State<RestCartPage> {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
-        pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+        pageBuilder: (_, __, ___) => const RoleBasedSideMenu(),
       ),
     );
   }

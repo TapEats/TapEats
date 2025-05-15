@@ -10,7 +10,6 @@ import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
 
 class FavouritesPage extends StatefulWidget {
-
   const FavouritesPage({super.key});
 
   @override
@@ -70,7 +69,7 @@ class _FavouritesPageState extends State<FavouritesPage> {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false, // Keep the background semi-transparent
-        pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+        pageBuilder: (_, __, ___) => const RoleBasedSideMenu(),
       ),
     );
   }
@@ -117,7 +116,8 @@ class _FavouritesPageState extends State<FavouritesPage> {
                 child: SliderButton(
                   labelText: 'Cart',
                   subText: '$totalItems items',
-                  onSlideComplete: _onSlideToCheckout, pageId: 'favourite_cart',
+                  onSlideComplete: _onSlideToCheckout,
+                  pageId: 'favourite_cart',
                 ),
               ),
             const SizedBox(height: 20),

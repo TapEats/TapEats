@@ -50,7 +50,8 @@ class _StatusPageState extends State<StatusPage> {
         setState(() {
           allOrders = List<Map<String, dynamic>>.from(response);
           // Find the index of the current order
-          _currentOrderIndex = allOrders.indexWhere((order) => order['order_id'] == widget.orderId);
+          _currentOrderIndex = allOrders
+              .indexWhere((order) => order['order_id'] == widget.orderId);
           if (_currentOrderIndex != -1) {
             _updateOrderDetails(allOrders[_currentOrderIndex]);
           }
@@ -75,7 +76,7 @@ class _StatusPageState extends State<StatusPage> {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
-        pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+        pageBuilder: (_, __, ___) => const RoleBasedSideMenu(),
       ),
     );
   }
@@ -90,7 +91,8 @@ class _StatusPageState extends State<StatusPage> {
             HeaderWidget(
               leftIcon: Iconsax.arrow_left_1,
               onLeftButtonPressed: () {
-                final sliderState = Provider.of<SliderState>(context, listen: false);
+                final sliderState =
+                    Provider.of<SliderState>(context, listen: false);
                 sliderState.setSliderState('cart_checkout', false);
                 sliderState.setSliderState('home_cart', false);
                 Navigator.popUntil(context, (route) => route.isFirst);
@@ -138,12 +140,12 @@ class _StatusPageState extends State<StatusPage> {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(
-              color: _currentOrderIndex == index 
+              color: _currentOrderIndex == index
                   ? const Color(0xFF222222)
                   : const Color(0xFF1A1A1A),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: _currentOrderIndex == index 
+                color: _currentOrderIndex == index
                     ? const Color(0xFFD0F0C0)
                     : const Color(0xFF222222),
                 width: 1,
@@ -155,7 +157,7 @@ class _StatusPageState extends State<StatusPage> {
                 Text(
                   'Order #${order['order_id'].toString().substring(0, 8)}',
                   style: TextStyle(
-                    color: _currentOrderIndex == index 
+                    color: _currentOrderIndex == index
                         ? const Color(0xFFD0F0C0)
                         : const Color(0xFFEEEFEF),
                     fontSize: 16,
@@ -164,9 +166,10 @@ class _StatusPageState extends State<StatusPage> {
                 ),
                 const SizedBox(width: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _currentOrderIndex == index 
+                    color: _currentOrderIndex == index
                         ? const Color(0xFF1A1A1A)
                         : const Color(0xFF222222),
                     borderRadius: BorderRadius.circular(6),
@@ -234,13 +237,18 @@ class _StatusPageState extends State<StatusPage> {
           icon: Iconsax.box,
           label: 'Received',
           time: '12:00pm',
-          isActive: orderStatus == 'Received' || orderStatus == 'Accepted' || orderStatus == 'Cooking' || orderStatus == 'Ready',
+          isActive: orderStatus == 'Received' ||
+              orderStatus == 'Accepted' ||
+              orderStatus == 'Cooking' ||
+              orderStatus == 'Ready',
         ),
         _StatusStep(
           icon: Iconsax.tick_circle,
           label: 'Accepted',
           time: '12:01pm',
-          isActive: orderStatus == 'Accepted' || orderStatus == 'Cooking' || orderStatus == 'Ready',
+          isActive: orderStatus == 'Accepted' ||
+              orderStatus == 'Cooking' ||
+              orderStatus == 'Ready',
         ),
         _StatusStep(
           icon: Iconsax.timer,
@@ -362,18 +370,19 @@ class _StatusPageState extends State<StatusPage> {
       child: Column(
         children: [
           _buildPriceRow('Item total', '\$${itemTotal.toStringAsFixed(2)}'),
-          _buildPriceRow('GST and restaurant charges', '\$${gstCharges.toStringAsFixed(2)}'),
+          _buildPriceRow('GST and restaurant charges',
+              '\$${gstCharges.toStringAsFixed(2)}'),
           _buildPriceRow('Platform fee', '\$${platformFee.toStringAsFixed(2)}'),
           const Divider(color: Color(0xFF8F8F8F)),
-          _buildPriceRow('Total', '\$${totalAmount.toStringAsFixed(2)}', isTotal: true),
+          _buildPriceRow('Total', '\$${totalAmount.toStringAsFixed(2)}',
+              isTotal: true),
         ],
       ),
     );
   }
 
   Widget _buildPriceRow(String label, String amount, {bool isTotal = false}) {
-    return
-        Padding(
+    return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -420,7 +429,8 @@ class _StatusStep extends StatelessWidget {
     return Column(
       children: [
         CircleAvatar(
-          backgroundColor: isActive ? const Color(0xFFD0F0C0) : const Color(0xFF1A1A1A),
+          backgroundColor:
+              isActive ? const Color(0xFFD0F0C0) : const Color(0xFF1A1A1A),
           child: Icon(
             icon,
             color: isActive ? const Color(0xFF1A1A1A) : const Color(0xFFD0F0C0),
@@ -447,4 +457,3 @@ class _StatusStep extends StatelessWidget {
     );
   }
 }
-

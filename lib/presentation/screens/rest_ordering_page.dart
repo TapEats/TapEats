@@ -11,6 +11,8 @@ import 'package:tapeats/presentation/widgets/plus_button.dart';
 import 'package:tapeats/presentation/widgets/search_bar.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
+import 'package:provider/provider.dart';
+import 'package:tapeats/presentation/state_management/slider_state.dart';
 
 class RestMenuPage extends StatefulWidget {
   final int selectedIndex;
@@ -39,9 +41,18 @@ class _RestMenuPageState extends State<RestMenuPage> {
   String? restaurantId;
 
   @override
+  @override
   void initState() {
     super.initState();
-    _fetchUserRestaurantId();
+    _fetchUserRestaurantId(); // This loads your menu data
+
+    // This resets the slider after the widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Provider.of<SliderState>(context, listen: false)
+            .resetSliderPosition('menu_cart');
+      }
+    });
   }
 
   Future<void> _fetchUserRestaurantId() async {
@@ -119,7 +130,7 @@ class _RestMenuPageState extends State<RestMenuPage> {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
-        pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+        pageBuilder: (_, __, ___) => const RoleBasedSideMenu(),
       ),
     );
   }
@@ -129,9 +140,10 @@ class _RestMenuPageState extends State<RestMenuPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a table first')),
       );
+      Provider.of<SliderState>(context, listen: false)
+          .resetSliderPosition('menu_cart');
       return;
     }
-
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -144,7 +156,13 @@ class _RestMenuPageState extends State<RestMenuPage> {
           selectedIndex: widget.selectedIndex,
         ),
       ),
-    );
+    ).then((_) {
+      // Reset state when returning from cart page
+      if (mounted) {
+        Provider.of<SliderState>(context, listen: false)
+            .resetSliderPosition('menu_cart');
+      }
+    });
   }
 
   Future<void> _selectTable() async {
@@ -205,13 +223,16 @@ class _RestMenuPageState extends State<RestMenuPage> {
           children: [
             HeaderWidget(
               leftIcon: Iconsax.arrow_left_1,
-              onLeftButtonPressed: () => Navigator.pop(context),
+              onLeftButtonPressed: () {
+                Provider.of<SliderState>(context, listen: false)
+                    .resetSliderPosition('menu_cart');
+                Navigator.pop(context);
+              },
               headingText: 'Menu',
               headingIcon: Iconsax.book_saved,
               rightIcon: Iconsax.menu_1,
               onRightButtonPressed: _openSideMenu,
             ),
-            const SizedBox(height: 20),
 
             // Table selection (restaurant-specific)
             Padding(
@@ -265,14 +286,26 @@ class _RestMenuPageState extends State<RestMenuPage> {
 
             // Checkout slider (restaurant-specific)
             if (totalItems > 0)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: SliderButton(
-                  labelText: 'Cart',
-                  subText: '$totalItems items',
-                  onSlideComplete: _onSlideToCheckout,
-                  pageId: 'menu_cart',
-                ),
+              Consumer<SliderState>(
+                builder: (context, sliderState, child) {
+                  // Force reset if cart is empty but slider was completed
+                  if (totalItems == 0 &&
+                      sliderState.getSliderState('menu_cart')) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      sliderState.resetSliderPosition('menu_cart');
+                    });
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: SliderButton(
+                      labelText: 'Cart',
+                      subText: '$totalItems items',
+                      onSlideComplete: _onSlideToCheckout,
+                      pageId: 'menu_cart',
+                    ),
+                  );
+                },
               ),
             const SizedBox(height: 20),
           ],

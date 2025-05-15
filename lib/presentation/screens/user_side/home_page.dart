@@ -19,7 +19,7 @@ import 'package:tapeats/main.dart' show routeObserver;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-  
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -105,29 +105,29 @@ class _HomePageState extends State<HomePage> with RouteAware {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
-        pageBuilder: (_, __, ___) => const SideMenuOverlay(),
+        pageBuilder: (_, __, ___) => const RoleBasedSideMenu(),
       ),
     );
   }
 
-void _onSlideToCheckout() {
-  final cartState = Provider.of<CartState>(context, listen: false);
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => CartPage(
-        cartItems: cartState.cartItems,  // Changed from getItems()
-        totalItems: cartState.totalItems, // Changed from getTotal()
+  void _onSlideToCheckout() {
+    final cartState = Provider.of<CartState>(context, listen: false);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CartPage(
+          cartItems: cartState.cartItems, // Changed from getItems()
+          totalItems: cartState.totalItems, // Changed from getTotal()
+        ),
+        settings: const RouteSettings(name: '/cart'),
       ),
-      settings: const RouteSettings(name: '/cart'),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-        final screenWidth = MediaQuery.of(context).size.width;
-final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 // return LayoutBuilder(
 //     builder: (context, constraints) {
 //       if (kDebugMode) {
@@ -174,7 +174,6 @@ final screenHeight = MediaQuery.of(context).size.height;
               const SizedBox(height: 10),
               _buildMenuItems(),
               const SizedBox(height: 10),
-
               Consumer<CartState>(
                 builder: (context, cartState, child) {
                   return cartState.totalItems > 0
@@ -186,14 +185,15 @@ final screenHeight = MediaQuery.of(context).size.height;
                             subText: '${cartState.totalItems} items',
                             onSlideComplete: _onSlideToCheckout,
                             pageId: 'home_cart',
-                            width: screenWidth * 0.8,  // Explicitly set the width
-                            height: screenHeight * 0.07,  // Explicitly set the height
+                            width:
+                                screenWidth * 0.8, // Explicitly set the width
+                            height: screenHeight *
+                                0.07, // Explicitly set the height
                           ),
                         )
                       : const SizedBox.shrink();
                 },
               ),
-
               const ActiveOrdersCarousel(),
               const SizedBox(height: 20),
             ],
@@ -201,8 +201,8 @@ final screenHeight = MediaQuery.of(context).size.height;
         ),
       ),
     );
-  // },
-  // );
+    // },
+    // );
   }
 
   Widget _buildFlavorAdventureSection() {
@@ -306,7 +306,8 @@ final screenHeight = MediaQuery.of(context).size.height;
 
   Widget _buildMenuItems() {
     final filteredMenuItems = menuItems.where((item) {
-      return (selectedCategory.isEmpty || item['category'] == selectedCategory) &&
+      return (selectedCategory.isEmpty ||
+              item['category'] == selectedCategory) &&
           (searchQuery.isEmpty ||
               item['name'].toLowerCase().contains(searchQuery.toLowerCase()));
     }).toList();
@@ -361,13 +362,15 @@ final screenHeight = MediaQuery.of(context).size.height;
                             ),
                             Consumer<CartState>(
                               builder: (context, cartState, child) {
-                                return cartState.cartItems.containsKey(item['name']) &&
+                                return cartState.cartItems
+                                            .containsKey(item['name']) &&
                                         cartState.cartItems[item['name']]! > 0
                                     ? Row(
                                         children: [
                                           MinusButton(
                                             onPressed: () =>
-                                                _removeItemFromCart(item['name']),
+                                                _removeItemFromCart(
+                                                    item['name']),
                                           ),
                                           const SizedBox(width: 5),
                                           Text(
