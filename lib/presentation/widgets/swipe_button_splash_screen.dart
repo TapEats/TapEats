@@ -84,7 +84,7 @@ if (user != null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => RestaurantHomePage(selectedIndex: 0),
+          builder: (context) => RestaurantHomePage(),
         ),
       );
     } else {

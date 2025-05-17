@@ -75,7 +75,8 @@ class NavbarState extends ChangeNotifier {
       return _getWaiterPage(index);
     } else if (_userRole == 'restaurant_cashier') {
       return _getCashierPage(index);
-    } else if (_userRole?.startsWith('restaurant_') ?? false) {
+    } else if (_userRole == 'restaurant_owner' ||
+               _userRole == 'restaurant_manager') {
       // Default for owner and manager
       return _getManagerPage(index);
     } else {
@@ -104,17 +105,17 @@ class NavbarState extends ChangeNotifier {
   Widget _getManagerPage(int index) {
     switch (index) {
       case 0:
-        return const RestaurantHomePage(selectedIndex: 0);
+        return const RestaurantHomePage();
       case 1:
         return const ReceivedOrdersPage(selectedIndex: 1);
       case 2:
         return const InventoryManagementPage(selectedIndex: 2);
-      // case 3:
-      //   return const InventoryManagementPage();
-      // case 4:
-      //   return const ReportsPage();
+      case 3:
+        return const InventoryManagementPage(selectedIndex: 2);
+      case 4:
+        return const InventoryManagementPage(selectedIndex: 2);
       default:
-        return const RestaurantHomePage(selectedIndex: 0);
+        return const RestaurantHomePage();
     }
   }
   
@@ -122,13 +123,13 @@ class NavbarState extends ChangeNotifier {
   Widget _getInventoryManagerPage(int index) {
     switch (index) {
       case 0:
-        return const RestaurantHomePage(selectedIndex: 0);
+        return const RestaurantHomePage();
       // case 1:
       //   return const InventoryManagementPage();
       // case 2:
       //   return const ReportsPage();
       default:
-        return const RestaurantHomePage(selectedIndex: 0);
+        return const RestaurantHomePage();
     }
   }
   
@@ -136,7 +137,7 @@ class NavbarState extends ChangeNotifier {
   Widget _getChefPage(int index) {
     switch (index) {
       case 0:
-        return const RestaurantHomePage(selectedIndex: 0);
+        return const RestaurantHomePage();
       // case 1:
       //   return const MenuViewPage();
       // case 2:
@@ -144,7 +145,7 @@ class NavbarState extends ChangeNotifier {
       // case 3:
       //   return const KitchenDisplayPage();
       default:
-        return const RestaurantHomePage(selectedIndex: 0);
+        return const RestaurantHomePage();
     }
   }
   
@@ -152,7 +153,7 @@ class NavbarState extends ChangeNotifier {
   Widget _getWaiterPage(int index) {
     switch (index) {
       case 0:
-        return const RestaurantHomePage(selectedIndex: 0);
+        return const RestaurantHomePage();
       // case 1:
       //   return const MenuViewPage();
       // case 2:
@@ -160,7 +161,7 @@ class NavbarState extends ChangeNotifier {
       // case 3:
       //   return const ReservationManagementPage();
       default:
-        return const RestaurantHomePage(selectedIndex: 0);
+        return const RestaurantHomePage();
     }
   }
   
@@ -168,7 +169,7 @@ class NavbarState extends ChangeNotifier {
   Widget _getCashierPage(int index) {
     switch (index) {
       case 0:
-        return const RestaurantHomePage(selectedIndex: 0);
+        return const RestaurantHomePage();
       case 1:
         return const ReceivedOrdersPage(selectedIndex: 1);
       // case 2:
@@ -176,7 +177,7 @@ class NavbarState extends ChangeNotifier {
       // case 3:
       //   return const ReconciliationPage();
       default:
-        return const RestaurantHomePage(selectedIndex: 0);
+        return const RestaurantHomePage();
     }
   }
   
@@ -254,4 +255,60 @@ class NavbarState extends ChangeNotifier {
     // Default deny if role is unknown
     return false;
   }
+// In NavbarState.dart - FIX THE getPagesForRole() METHOD:
+List<Widget> getPagesForRole() {
+  if (_userRole == 'customer') {
+    return [
+      const HomePage(),
+      const MenuPage(),
+      const FavouritesPage(),
+      const ProfilePage(),
+    ];
+  } else if (_userRole == 'restaurant_inventory_manager') {
+    return [
+      const RestaurantHomePage(),
+      const InventoryManagementPage(selectedIndex: 1),
+      const InventoryManagementPage(selectedIndex: 2), // Placeholder for Reports
+    ];
+  } else if (_userRole == 'restaurant_chef') {
+    return [
+      const RestaurantHomePage(),
+      const ReceivedOrdersPage(selectedIndex: 1), // Placeholder for Menu 
+      const InventoryManagementPage(selectedIndex: 2),
+      const ReceivedOrdersPage(selectedIndex: 3), // Placeholder for Kitchen
+    ];
+  } else if (_userRole == 'restaurant_waiter') {
+    return [
+      const RestaurantHomePage(),
+      const ReceivedOrdersPage(selectedIndex: 1), // Placeholder for Menu
+      const ReceivedOrdersPage(selectedIndex: 2), // Placeholder for Tables
+      const ReceivedOrdersPage(selectedIndex: 3), // Placeholder for Reservations
+    ];
+  } else if (_userRole == 'restaurant_cashier') {
+    return [
+      const RestaurantHomePage(),
+      const ReceivedOrdersPage(selectedIndex: 1),
+      const ReceivedOrdersPage(selectedIndex: 2), // Placeholder for Payments
+      const ReceivedOrdersPage(selectedIndex: 3), // Placeholder for Records
+    ];
+  } else if (_userRole == 'restaurant_onwer' ||
+             _userRole == 'restaurant_manager') {
+    // Default for owner and manager - MUST HAVE 5 ITEMS to match the labels
+    return [
+      const RestaurantHomePage(),
+      const ReceivedOrdersPage(selectedIndex: 1), // Orders
+      const ReceivedOrdersPage(selectedIndex: 2), // Placeholder for Tables
+      const InventoryManagementPage(selectedIndex: 3),
+      const InventoryManagementPage(selectedIndex: 4), // Placeholder for Reports
+    ];
+  } else {
+    // Default to customer pages
+    return [
+      const HomePage(),
+      const MenuPage(),
+      const FavouritesPage(),
+      const ProfilePage(),
+    ];
+  }
+}
 }

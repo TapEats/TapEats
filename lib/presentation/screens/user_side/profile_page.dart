@@ -5,10 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/data/models/user.dart';
+import 'package:tapeats/presentation/screens/user_side/notification_page.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
+import 'package:tapeats/services/notification_service.dart';
 import 'package:tapeats/services/profile_image_service.dart';
 import 'package:tapeats/services/user_services.dart';
 
@@ -363,6 +366,13 @@ void _handleCancel() {
     );
   }
 
+  void _navigateToNotifications() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const NotificationPage()),
+    );
+  }
+
   Widget _buildTextField(String label, TextEditingController controller, {
     TextInputType? keyboardType, 
     List<TextInputFormatter>? inputFormatters
@@ -627,18 +637,21 @@ void _handleCancel() {
       );
     }
 
+    final notificationService = Provider.of<NotificationService>(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFF151611),
       body: SafeArea(
         child: Column(
           children: [
             HeaderWidget(
-              leftIcon: Iconsax.arrow_left_1,
-              onLeftButtonPressed: () => Navigator.pop(context),
+              leftIcon: Iconsax.notification,
+              onLeftButtonPressed: _navigateToNotifications,
               headingText: 'Profile',
               headingIcon: Iconsax.user,
               rightIcon: Iconsax.menu_1,
               onRightButtonPressed: _openSideMenu,
+              notificationCount: notificationService.unreadCount,
             ),
             const SizedBox(height: 20),
             Expanded(

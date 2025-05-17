@@ -38,10 +38,7 @@ class _CustomFiveFooterState extends State<CustomFiveFooter> {
           Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => RestaurantHomePage(
-                  selectedIndex:
-                      selectedIndex, // Pass the current selected index
-                ),
+                builder: (context) => RestaurantHomePage(),
               ));
 
           break;

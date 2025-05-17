@@ -3,6 +3,8 @@ import 'package:iconsax/iconsax.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/employee_page.dart';
+import 'package:tapeats/presentation/screens/user_side/notification_page.dart';
 import 'package:tapeats/presentation/state_management/navbar_state.dart';
 import 'package:tapeats/services/profile_image_service.dart';
 
@@ -100,13 +102,19 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
       page: const ProfilePage(),
       allowedRoles: ['customer'],
     ),
+    MenuItem(
+      title: 'Notifications',
+      icon: Iconsax.notification,
+      page: const NotificationPage(),
+      allowedRoles: ['customer'],
+    ),
 
     // === RESTAURANT COMMON PAGES ===
     // Dashboard (For all restaurant roles)
     MenuItem(
       title: 'Dashboard',
       icon: Iconsax.home,
-      page: const RestaurantHomePage(selectedIndex: 0),
+      page: const RestaurantHomePage(),
       allowedRoles: [
         'restaurant_owner', 
         'restaurant_manager', 
@@ -221,15 +229,16 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //   ],
     // ),
     
-    // // RBAC Management (Owner only)
-    // MenuItem(
-    //   title: 'Roles/RBAC',
-    //   icon: Iconsax.security_user,
-    //   page: const RBACManagementPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner'
-    //   ],
-    // ),
+    // Employee Management (NEW)
+    MenuItem(
+      title: 'Employees',
+      icon: Iconsax.people,
+      page: const EmployeeManagementPage(selectedIndex: 0),
+      allowedRoles: [
+        'restaurant_owner',
+        'restaurant_manager'
+      ],
+    ),
     
     // // === INVENTORY MANAGER SPECIFIC ===
     
@@ -423,6 +432,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
       'Menu & Tables': [], // For menu and table management
       'Inventory': [], // For inventory and stock
       'Reports': [], // For analytics and reports
+      'Staff': [], // For employee management
       'Settings': [], // For settings and configuration
     };
 
@@ -447,8 +457,11 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
       } else if (item.title.contains('Report') || 
                 item.title == 'Analytics') {
         _groupedMenuItems['Reports']!.add(item);
+      } else if (item.title.contains('Employee') || 
+                item.title.contains('Role') ||
+                item.title.contains('Staff')) {
+        _groupedMenuItems['Staff']!.add(item);
       } else if (item.title == 'Settings' || 
-                item.title == 'Roles/RBAC' ||
                 item.title == 'Profile') {
         _groupedMenuItems['Settings']!.add(item);
       } else {
@@ -508,7 +521,8 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     // Special handling for standalone pages that don't affect bottom navbar
     bool isStandalonePage = 
         page is ReceivedOrdersPage ||
-        page is OrderHistoryPage; // Add OrderHistoryPage as a standalone page
+        page is OrderHistoryPage ||
+        page is EmployeeManagementPage;
         //  ||
         // page is ActiveOrdersPage ||
         // page is ReservationManagementPage ||

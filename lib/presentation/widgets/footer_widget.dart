@@ -19,7 +19,7 @@ class DynamicFooter extends StatelessWidget {
           height: 60,
           backgroundColor: Colors.transparent,
           color: const Color(0xFF222222),
-          buttonBackgroundColor: const Color(0xFF222222), // Consistent for all roles
+          buttonBackgroundColor: const Color(0xFF222222),
           animationDuration: const Duration(milliseconds: 300),
           animationCurve: Curves.easeInOut,
           items: items,
@@ -91,18 +91,15 @@ class DynamicFooter extends StatelessWidget {
   }
 
   void _onItemTapped(BuildContext context, int index, NavbarState navbarState) {
-    if (navbarState.selectedIndex != index) {
-      // Update the selected index in the provider
-      navbarState.updateIndex(index);
-      
-      // // Get the page for this index based on the user's role
-      // final page = navbarState.getPageForIndex(index);
-      
-      // // Navigate to the page
-      // Navigator.pushReplacement(
-      //   context,
-      //   MaterialPageRoute(builder: (context) => page),
-      // );
+    // Update selected index in the provider
+    navbarState.updateIndex(index);
+    
+    // For debugging - print to verify index is changing
+    print('Navigation index changed to: $index');
+    
+    // Make sure any deep navigation stacks are popped when changing tabs
+    while (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
     }
   }
 }

@@ -6,6 +6,7 @@ import 'package:tapeats/presentation/screens/login_page.dart';
 import 'package:tapeats/presentation/state_management/cart_state.dart';
 import 'package:tapeats/presentation/state_management/navbar_state.dart';
 import 'package:tapeats/presentation/state_management/slider_state.dart';
+import 'package:tapeats/services/notification_service.dart';
 import 'package:tapeats/utils/env_loader.dart';
 import 'package:tapeats/presentation/screens/splash_screen.dart';
 import 'package:tapeats/presentation/screens/user_side/main_screen.dart';
@@ -32,12 +33,16 @@ Future<void> main() async {
     anonKey: supabaseAnonKey,
   );
 
+  final notificationService = NotificationService();
+  notificationService.initialize();
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartState()),
         ChangeNotifierProvider(create: (_) => SliderState()),
         ChangeNotifierProvider(create: (_) => NavbarState()),
+        ChangeNotifierProvider.value(value: notificationService),
       ],
       child: const MyApp(),
     ),
@@ -58,10 +63,23 @@ class MyApp extends StatelessWidget {
       ),
       navigatorObservers: [routeObserver],
       initialRoute: '/',
+      // Current routes:
       routes: {
         '/': (context) => const SplashScreen(selectedIndex: 0),
         '/auth/login': (context) => const LoginPage(),
         '/home': (context) => MainScreen(),
+        
+        // Add these new routes for restaurant pages:
+        '/restaurant': (context) => MainScreen(), // This will use NavbarState to show restaurant pages
+        '/restaurant/home': (context) => MainScreen(),
+        '/restaurant/orders': (context) {
+          // Pre-select the Orders tab (index 1) when navigating here
+          final navbarState = Provider.of<NavbarState>(context, listen: false);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            navbarState.updateIndex(1);
+          });
+          return MainScreen();
+        },
       },
       // Handle undefined routes
       onUnknownRoute: (settings) {
