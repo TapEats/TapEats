@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:tapeats/presentation/screens/restaurant_side/restaurant_home_page.dart';
 import 'package:tapeats/presentation/screens/login_page.dart';
 import 'package:tapeats/presentation/screens/user_side/main_screen.dart';
 
@@ -84,7 +83,7 @@ if (user != null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => RestaurantHomePage(),
+          builder: (context) => MainScreen(),
         ),
       );
     } else {

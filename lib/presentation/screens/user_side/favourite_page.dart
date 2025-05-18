@@ -13,19 +13,22 @@ import 'package:tapeats/presentation/widgets/slider_button.dart';
 import 'package:tapeats/services/notification_service.dart';
 
 class FavouritesPage extends StatefulWidget {
-
   const FavouritesPage({super.key});
 
   @override
   State<FavouritesPage> createState() => _FavouritesPageState();
 }
 
-class _FavouritesPageState extends State<FavouritesPage> {
+class _FavouritesPageState extends State<FavouritesPage> with AutomaticKeepAliveClientMixin {
   final SupabaseClient supabase = Supabase.instance.client;
-  Map<String, int> cartItems =
-      {}; // This will store item names and their quantities
+  Map<String, int> cartItems = {}; // This will store item names and their quantities
   int totalItems = 0; // Total number of items in the cart
   List<dynamic> favouriteItems = [];
+  bool _isLoading = true;
+
+  // Required for AutomaticKeepAliveClientMixin
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -34,19 +37,35 @@ class _FavouritesPageState extends State<FavouritesPage> {
   }
 
   Future<void> _fetchFavouritesData() async {
-    final response = await supabase.from('menu').select(
-        'name, price, rating, cooking_time, image_url'); // Ensure the image_url is fetched
+    try {
+      final response = await supabase.from('menu').select(
+          'name, price, rating, cooking_time, image_url');
 
-    if (response.isNotEmpty) {
+      // Critical: Check if widget is still mounted before setting state
+      if (!mounted) return;
+
       setState(() {
-        favouriteItems = response;
+        _isLoading = false;
+        if (response.isNotEmpty) {
+          favouriteItems = response;
+        } else {
+          favouriteItems = [];
+        }
       });
-    } else {
-      // Handle if no favourites found
+    } catch (e) {
+      // Handle error
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        favouriteItems = [];
+      });
     }
   }
 
   void _addItemToCart(String itemName) {
+    // Check if widget is still mounted
+    if (!mounted) return;
+    
     setState(() {
       if (cartItems.containsKey(itemName)) {
         cartItems[itemName] = cartItems[itemName]! + 1;
@@ -58,6 +77,9 @@ class _FavouritesPageState extends State<FavouritesPage> {
   }
 
   void _removeItemFromCart(String itemName) {
+    // Check if widget is still mounted
+    if (!mounted) return;
+    
     setState(() {
       if (cartItems.containsKey(itemName) && cartItems[itemName]! > 0) {
         cartItems[itemName] = cartItems[itemName]! - 1;
@@ -99,7 +121,22 @@ class _FavouritesPageState extends State<FavouritesPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Must call super.build when using AutomaticKeepAliveClientMixin
+    super.build(context);
+    
     final notificationService = Provider.of<NotificationService>(context);
+    
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF151611),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFFD0F0C0),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF151611),
       body: SafeArea(
@@ -129,7 +166,8 @@ class _FavouritesPageState extends State<FavouritesPage> {
                 child: SliderButton(
                   labelText: 'Cart',
                   subText: '$totalItems items',
-                  onSlideComplete: _onSlideToCheckout, pageId: 'favourite_cart',
+                  onSlideComplete: _onSlideToCheckout,
+                  pageId: 'favourite_cart',
                 ),
               ),
             const SizedBox(height: 20),
@@ -140,6 +178,17 @@ class _FavouritesPageState extends State<FavouritesPage> {
   }
 
   Widget _buildFavouriteItems() {
+    if (favouriteItems.isEmpty) {
+      return const Expanded(
+        child: Center(
+          child: Text(
+            'No favourite items yet',
+            style: TextStyle(color: Color(0xFFEEEFEF), fontSize: 16),
+          ),
+        ),
+      );
+    }
+
     return Expanded(
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),

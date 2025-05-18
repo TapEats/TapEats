@@ -19,6 +19,7 @@ import 'package:tapeats/presentation/screens/user_side/profile_page.dart';
 // Restaurant pages - common
 import 'package:tapeats/presentation/screens/restaurant_side/received_page.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/restaurant_home_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/reports_page.dart';
 // import 'package:tapeats/presentation/screens/restaurant_side/menu_view_page.dart';
 // import 'package:tapeats/presentation/screens/restaurant_side/tables_overview_page.dart';
 // import 'package:tapeats/presentation/screens/restaurant_side/table_orders_page.dart';
@@ -26,7 +27,6 @@ import 'package:tapeats/presentation/screens/restaurant_side/restaurant_home_pag
 // // Restaurant pages - role specific
 // import 'package:tapeats/presentation/screens/restaurant_side/edit_menu_page.dart';
 // import 'package:tapeats/presentation/screens/restaurant_side/inventory_management_page.dart';
-// import 'package:tapeats/presentation/screens/restaurant_side/reports_page.dart';
 // import 'package:tapeats/presentation/screens/restaurant_side/rbac_management_page.dart';
 // import 'package:tapeats/presentation/screens/restaurant_side/stock_management_page.dart';
 // import 'package:tapeats/presentation/screens/restaurant_side/supplier_management_page.dart';
@@ -143,7 +143,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     MenuItem(
       title: 'Received Orders',
       icon: Iconsax.receipt,
-      page: const ReceivedOrdersPage(selectedIndex: 1),
+      page: const ReceivedOrdersPage(),
       allowedRoles: [
         'restaurant_owner', 
         'restaurant_manager', 
@@ -217,23 +217,24 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //   ],
     // ),
     
-    // // Reports & Analytics
-    // MenuItem(
-    //   title: 'Reports',
-    //   icon: Iconsax.chart,
-    //   page: const ReportsPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner',
-    //     'restaurant_manager',
-    //     'restaurant_inventory_manager' // Limited reports for inventory
-    //   ],
-    // ),
+    // Reports & Analytics
+    MenuItem(
+      title: 'Reports',
+      icon: Iconsax.chart,
+      page: const ReportsPage(), // Using selectedIndex: 0 since we're not using navbar
+      allowedRoles: [
+        'restaurant_owner',
+        'restaurant_manager',
+        'restaurant_inventory_manager', // Limited reports for inventory
+        'restaurant_cashier' // Added cashier for access to reports
+      ],
+    ),
     
-    // Employee Management (NEW)
+    // Employee Management
     MenuItem(
       title: 'Employees',
       icon: Iconsax.people,
-      page: const EmployeeManagementPage(selectedIndex: 0),
+      page: const EmployeeManagementPage(),
       allowedRoles: [
         'restaurant_owner',
         'restaurant_manager'
@@ -522,12 +523,8 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     bool isStandalonePage = 
         page is ReceivedOrdersPage ||
         page is OrderHistoryPage ||
-        page is EmployeeManagementPage;
-        //  ||
-        // page is ActiveOrdersPage ||
-        // page is ReservationManagementPage ||
-        // page is RBACManagementPage ||
-        // page is SupplierManagementPage
+        page is EmployeeManagementPage ||
+        page is ReportsPage; // Add ReportsPage as a standalone page
     
     if (isStandalonePage) {
       // Wait for animation to complete before navigation

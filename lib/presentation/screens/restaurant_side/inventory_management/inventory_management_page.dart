@@ -15,11 +15,9 @@ import 'package:tapeats/presentation/widgets/footer_widget.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 
 class InventoryManagementPage extends StatefulWidget {
-  final int selectedIndex;
   
   const InventoryManagementPage({
     super.key,
-    required this.selectedIndex,
   });
 
   @override
@@ -46,7 +44,6 @@ class _InventoryManagementPageState extends State<InventoryManagementPage> {
     super.initState();
     // Update the navbar state with the correct index
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<NavbarState>(context, listen: false).updateIndex(widget.selectedIndex);
       _fetchInventoryStats();
     });
   }
@@ -107,7 +104,7 @@ class _InventoryManagementPageState extends State<InventoryManagementPage> {
         // 3. Get suppliers count (if suppliers table exists)
         final suppliersResult = await _supabase
             .from('suppliers')
-            .select('id')
+            .select('supplier_id')
             .eq('restaurant_id', restaurantId);
         
         _suppliersCount = suppliersResult.length;
@@ -391,7 +388,7 @@ class _InventoryManagementPageState extends State<InventoryManagementPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => StockManagementPage(selectedIndex: widget.selectedIndex),
+                                  builder: (context) => StockManagementPage(),
                                 ),
                               );
                             },
@@ -493,7 +490,6 @@ class _InventoryManagementPageState extends State<InventoryManagementPage> {
         },
         child: const Icon(Iconsax.add, color: Color(0xFF222222)),
       ),
-      bottomNavigationBar: const DynamicFooter(),
     );
   }
 

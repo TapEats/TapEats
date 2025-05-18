@@ -21,10 +21,9 @@ class MenuPage extends StatefulWidget {
   State<MenuPage> createState() => _MenuPageState();
 }
 
-class _MenuPageState extends State<MenuPage> {
+class _MenuPageState extends State<MenuPage> with AutomaticKeepAliveClientMixin {
   final SupabaseClient supabase = Supabase.instance.client;
-  Map<String, int> cartItems =
-      {}; // This will store item names and their quantities
+  Map<String, int> cartItems = {}; // This will store item names and their quantities
   int totalItems = 0; // Total number of items in the cart
   final TextEditingController _searchController = TextEditingController();
   String searchQuery = ''; // Stores the search input
@@ -32,6 +31,11 @@ class _MenuPageState extends State<MenuPage> {
   List<dynamic> menuItems = [];
   List<String> categories = [];
   String selectedCategory = '';
+  bool _isLoading = true;
+
+  // Required for AutomaticKeepAliveClientMixin
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -39,27 +43,56 @@ class _MenuPageState extends State<MenuPage> {
     _fetchMenuData();
   }
 
-  Future<void> _fetchMenuData() async {
-    final response = await supabase.from('menu').select(
-        'name, price, category, rating, cooking_time, image_url'); // Ensure the image_url is fetched
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
-    if (response.isNotEmpty) {
-      Set<String> uniqueCategories = {};
+  Future<void> _fetchMenuData() async {
+    try {
+      final response = await supabase.from('menu').select(
+          'name, price, category, rating, cooking_time, image_url');
+
+      // Critical: Check if widget is still mounted before setting state
+      if (!mounted) return;
+
       setState(() {
-        menuItems = response;
-        for (var item in response) {
-          uniqueCategories.add(item['category'].toString());
+        _isLoading = false;
+        if (response.isNotEmpty) {
+          menuItems = response;
+          Set<String> uniqueCategories = {};
+          for (var item in response) {
+            uniqueCategories.add(item['category'].toString());
+          }
+          categories = uniqueCategories.toList();
+        } else {
+          if (kDebugMode) {
+            print('No menu data found');
+          }
+          menuItems = [];
+          categories = [];
         }
-        categories = uniqueCategories.toList();
       });
-    } else {
+    } catch (e) {
       if (kDebugMode) {
-        print('Error fetching menu data');
+        print('Error fetching menu data: $e');
       }
+      
+      // Check if still mounted before setting error state
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        menuItems = [];
+        categories = [];
+      });
     }
   }
 
   void _selectCategory(String category) {
+    // Check if still mounted before setting state
+    if (!mounted) return;
+    
     setState(() {
       selectedCategory = selectedCategory == category
           ? ''
@@ -68,6 +101,9 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   void _addItemToCart(String itemName) {
+    // Check if still mounted before setting state
+    if (!mounted) return;
+    
     setState(() {
       if (cartItems.containsKey(itemName)) {
         cartItems[itemName] = cartItems[itemName]! + 1;
@@ -82,6 +118,9 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   void _removeItemFromCart(String itemName) {
+    // Check if still mounted before setting state
+    if (!mounted) return;
+    
     setState(() {
       if (cartItems.containsKey(itemName) && cartItems[itemName]! > 0) {
         cartItems[itemName] = cartItems[itemName]! - 1;
@@ -126,7 +165,22 @@ class _MenuPageState extends State<MenuPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Must call super.build when using AutomaticKeepAliveClientMixin
+    super.build(context);
+    
     final notificationService = Provider.of<NotificationService>(context);
+    
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF151611),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFFD0F0C0),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF151611),
       body: SafeArea(
@@ -137,7 +191,6 @@ class _MenuPageState extends State<MenuPage> {
             HeaderWidget(
               leftIcon: Iconsax.notification,
               onLeftButtonPressed: _navigateToNotifications,
-              // onLeftButtonPressed: () => Navigator.pop(context), // Back action
               headingText: 'Menu',
               headingIcon: Iconsax.book_saved,
               rightIcon: Iconsax.menu_1,
@@ -153,6 +206,8 @@ class _MenuPageState extends State<MenuPage> {
                 controller: _searchController,
                 hintText: 'Find your cravings',
                 onSearch: () {
+                  // Check if still mounted before setting state from search
+                  if (!mounted) return;
                   setState(() {
                     searchQuery = _searchController.text;
                   });
@@ -176,7 +231,8 @@ class _MenuPageState extends State<MenuPage> {
                 child: SliderButton(
                   labelText: 'Cart',
                   subText: '$totalItems items',
-                  onSlideComplete: _onSlideToCheckout, pageId: 'menu_cart',
+                  onSlideComplete: _onSlideToCheckout,
+                  pageId: 'menu_cart',
                 ),
               ),
             const SizedBox(height: 20),
@@ -187,6 +243,18 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   Widget _buildCategoryButtons() {
+    if (categories.isEmpty) {
+      return const SizedBox(
+        height: 40,
+        child: Center(
+          child: Text(
+            'No categories available',
+            style: TextStyle(color: Color(0xFFEEEFEF)),
+          ),
+        ),
+      );
+    }
+    
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -255,12 +323,36 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   Widget _buildMenuItems() {
+    if (menuItems.isEmpty) {
+      return const Expanded(
+        child: Center(
+          child: Text(
+            'No menu items available',
+            style: TextStyle(color: Color(0xFFEEEFEF), fontSize: 16),
+          ),
+        ),
+      );
+    }
+    
     final filteredMenuItems = menuItems.where((item) {
       return (selectedCategory.isEmpty ||
               item['category'] == selectedCategory) &&
           (searchQuery.isEmpty ||
               item['name'].toLowerCase().contains(searchQuery.toLowerCase()));
     }).toList();
+    
+    if (filteredMenuItems.isEmpty) {
+      return Expanded(
+        child: Center(
+          child: Text(
+            searchQuery.isNotEmpty 
+              ? 'No results found for "$searchQuery"'
+              : 'No items in this category',
+            style: const TextStyle(color: Color(0xFFEEEFEF), fontSize: 16),
+          ),
+        ),
+      );
+    }
 
     return Expanded(
       child: ListView.builder(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/employee_page.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/inventory_management/inventory_management_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/reports_page.dart';
 
 // Import customer pages
 import 'package:tapeats/presentation/screens/user_side/home_page.dart';
@@ -107,13 +109,13 @@ class NavbarState extends ChangeNotifier {
       case 0:
         return const RestaurantHomePage();
       case 1:
-        return const ReceivedOrdersPage(selectedIndex: 1);
+        return const ReceivedOrdersPage();
       case 2:
-        return const InventoryManagementPage(selectedIndex: 2);
+        return const InventoryManagementPage();
       case 3:
-        return const InventoryManagementPage(selectedIndex: 2);
+        return const ReportsPage();
       case 4:
-        return const InventoryManagementPage(selectedIndex: 2);
+        return const EmployeeManagementPage();
       default:
         return const RestaurantHomePage();
     }
@@ -171,7 +173,7 @@ class NavbarState extends ChangeNotifier {
       case 0:
         return const RestaurantHomePage();
       case 1:
-        return const ReceivedOrdersPage(selectedIndex: 1);
+        return const ReceivedOrdersPage();
       // case 2:
       //   return const PaymentProcessingPage();
       // case 3:
@@ -188,14 +190,14 @@ class NavbarState extends ChangeNotifier {
     } else if (_userRole == 'restaurant_inventory_manager') {
       return ['Dashboard', 'Inventory', 'Reports'];
     } else if (_userRole == 'restaurant_chef') {
-      return ['Dashboard', 'Menu', 'Inventory', 'Kitchen'];
+      return ['Dashboard', 'Orders', 'Inventory', 'Kitchen'];
     } else if (_userRole == 'restaurant_waiter') {
-      return ['Dashboard', 'Menu', 'Tables', 'Reservations'];
+      return ['Dashboard', 'Orders', 'Tables', 'Reservations'];
     } else if (_userRole == 'restaurant_cashier') {
       return ['Dashboard', 'Orders', 'Payments', 'Records'];
     } else if (_userRole?.startsWith('restaurant_') ?? false) {
-      // Default for owner and manager
-      return ['Dashboard', 'Menu', 'Tables', 'Inventory', 'Reports'];
+      // Update to match your actual pages
+      return ['Dashboard', 'Orders', 'Inventory', 'Reports', 'Employees'];
     } else {
       return ['Home', 'Menu', 'Favourites', 'Profile'];
     }
@@ -267,39 +269,39 @@ List<Widget> getPagesForRole() {
   } else if (_userRole == 'restaurant_inventory_manager') {
     return [
       const RestaurantHomePage(),
-      const InventoryManagementPage(selectedIndex: 1),
-      const InventoryManagementPage(selectedIndex: 2), // Placeholder for Reports
+      const InventoryManagementPage(),
+      const ReportsPage(),
     ];
   } else if (_userRole == 'restaurant_chef') {
     return [
       const RestaurantHomePage(),
-      const ReceivedOrdersPage(selectedIndex: 1), // Placeholder for Menu 
-      const InventoryManagementPage(selectedIndex: 2),
-      const ReceivedOrdersPage(selectedIndex: 3), // Placeholder for Kitchen
+      const ReceivedOrdersPage(),
+      const InventoryManagementPage(),
+      const ReceivedOrdersPage(),
     ];
   } else if (_userRole == 'restaurant_waiter') {
     return [
       const RestaurantHomePage(),
-      const ReceivedOrdersPage(selectedIndex: 1), // Placeholder for Menu
-      const ReceivedOrdersPage(selectedIndex: 2), // Placeholder for Tables
-      const ReceivedOrdersPage(selectedIndex: 3), // Placeholder for Reservations
+      const ReceivedOrdersPage(),
+      const ReceivedOrdersPage(),
+      const ReceivedOrdersPage(),
     ];
   } else if (_userRole == 'restaurant_cashier') {
     return [
       const RestaurantHomePage(),
-      const ReceivedOrdersPage(selectedIndex: 1),
-      const ReceivedOrdersPage(selectedIndex: 2), // Placeholder for Payments
-      const ReceivedOrdersPage(selectedIndex: 3), // Placeholder for Records
+      const ReceivedOrdersPage(),
+      const ReceivedOrdersPage(),
+      const ReceivedOrdersPage(),
     ];
-  } else if (_userRole == 'restaurant_onwer' ||
+  } else if (_userRole == 'restaurant_owner' ||
              _userRole == 'restaurant_manager') {
-    // Default for owner and manager - MUST HAVE 5 ITEMS to match the labels
+    // Update this to match the actual navigation structure
     return [
-      const RestaurantHomePage(),
-      const ReceivedOrdersPage(selectedIndex: 1), // Orders
-      const ReceivedOrdersPage(selectedIndex: 2), // Placeholder for Tables
-      const InventoryManagementPage(selectedIndex: 3),
-      const InventoryManagementPage(selectedIndex: 4), // Placeholder for Reports
+      const RestaurantHomePage(),                // Dashboard
+      const ReceivedOrdersPage(), // Orders
+      const InventoryManagementPage(), // Inventory
+      const ReportsPage(),        // Reports
+      const EmployeeManagementPage(), // Employee Management
     ];
   } else {
     // Default to customer pages

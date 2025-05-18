@@ -26,7 +26,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with RouteAware {
+class _HomePageState extends State<HomePage> with RouteAware, AutomaticKeepAliveClientMixin {
   final SupabaseClient supabase = Supabase.instance.client;
   final TextEditingController _searchController = TextEditingController();
   String searchQuery = '';
@@ -34,6 +34,11 @@ class _HomePageState extends State<HomePage> with RouteAware {
   List<dynamic> menuItems = [];
   List<String> categories = [];
   String selectedCategory = '';
+  bool _isLoading = true;
+
+  // Required for AutomaticKeepAliveClientMixin
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -63,29 +68,50 @@ class _HomePageState extends State<HomePage> with RouteAware {
 
   /// Fetch menu items and manually extract distinct categories
   Future<void> _fetchMenuData() async {
-    final response = await supabase.from('menu').select(
-        'name, price, category, rating, cooking_time, image_url'); // Ensure the image_url is fetched
+    try {
+      final response = await supabase.from('menu').select(
+          'name, price, category, rating, cooking_time, image_url');
 
-    if (response.isNotEmpty) {
-      Set<String> uniqueCategories = {};
-      setState(() {
-        menuItems = response;
-        for (var item in response) {
-          uniqueCategories.add(item['category'].toString());
+      // Check if widget is still mounted before calling setState
+      if (!mounted) return;
+
+      if (response.isNotEmpty) {
+        Set<String> uniqueCategories = {};
+        setState(() {
+          _isLoading = false;
+          menuItems = response;
+          for (var item in response) {
+            uniqueCategories.add(item['category'].toString());
+          }
+          categories = uniqueCategories.toList();
+          if (categories.isNotEmpty) {
+            selectedCategory = categories[0]; // Set the first category as default
+          }
+        });
+      } else {
+        if (kDebugMode) {
+          print('Error fetching menu data');
         }
-        categories = uniqueCategories.toList();
-        if (categories.isNotEmpty) {
-          selectedCategory = categories[0]; // Set the first category as default
-        }
-      });
-    } else {
-      if (kDebugMode) {
-        print('Error fetching menu data');
+        setState(() {
+          _isLoading = false;
+        });
       }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching menu data: $e');
+      }
+      // Add mounted check before setState for error handling
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   void _selectCategory(String category) {
+    // Add mounted check before setState
+    if (!mounted) return;
+    
     setState(() {
       if (selectedCategory == category) {
         selectedCategory = '';
@@ -125,8 +151,8 @@ class _HomePageState extends State<HomePage> with RouteAware {
       context,
       MaterialPageRoute(
         builder: (context) => CartPage(
-          cartItems: cartState.cartItems,  // Changed from getItems()
-          totalItems: cartState.totalItems, // Changed from getTotal()
+          cartItems: cartState.cartItems,
+          totalItems: cartState.totalItems,
         ),
         settings: const RouteSettings(name: '/cart'),
       ),
@@ -135,20 +161,24 @@ class _HomePageState extends State<HomePage> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-        final screenWidth = MediaQuery.of(context).size.width;
-final screenHeight = MediaQuery.of(context).size.height;
-// return LayoutBuilder(
-//     builder: (context, constraints) {
-//       if (kDebugMode) {
-//         print('Page ID: home_cart');
-//         print('Layout Constraints:');
-//         print('  Max width: ${constraints.maxWidth}');
-//         print('  Max height: ${constraints.maxHeight}');
-//         print('  Min width: ${constraints.minWidth}');
-//         print('  Min height: ${constraints.minHeight}');
-//       }
-
+    // Must call super.build when using AutomaticKeepAliveClientMixin
+    super.build(context);
+    
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
     final notificationService = Provider.of<NotificationService>(context);
+
+    // Show loading indicator while data is being fetched
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF151611),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFFD0F0C0),
+          ),
+        ),
+      );
+    }
 
     return PopScope(
       canPop: true,
@@ -176,6 +206,8 @@ final screenHeight = MediaQuery.of(context).size.height;
                   controller: _searchController,
                   hintText: 'Find your cravings',
                   onSearch: () {
+                    // Add mounted check before updating state
+                    if (!mounted) return;
                     setState(() {
                       searchQuery = _searchController.text;
                     });
@@ -199,8 +231,8 @@ final screenHeight = MediaQuery.of(context).size.height;
                             subText: '${cartState.totalItems} items',
                             onSlideComplete: _onSlideToCheckout,
                             pageId: 'home_cart',
-                            width: screenWidth * 0.8,  // Explicitly set the width
-                            height: screenHeight * 0.07,  // Explicitly set the height
+                            width: screenWidth * 0.8,
+                            height: screenHeight * 0.07,
                           ),
                         )
                       : const SizedBox.shrink();
@@ -214,11 +246,11 @@ final screenHeight = MediaQuery.of(context).size.height;
         ),
       ),
     );
-  // },
-  // );
   }
 
+  // Rest of your methods (unchanged)...
   Widget _buildFlavorAdventureSection() {
+    // Your existing implementation
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Row(

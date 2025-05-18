@@ -151,7 +151,6 @@ class _RestaurantHomePageState extends State<RestaurantHomePage> {
       ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         extendBody: true,
-        bottomNavigationBar: const DynamicFooter(),
       ),
     );
   }

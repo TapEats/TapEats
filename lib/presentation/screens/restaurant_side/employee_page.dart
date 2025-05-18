@@ -7,13 +7,12 @@ import 'package:tapeats/presentation/widgets/footer_widget.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/edit_employee_page.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/add_employee_page.dart';
+import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 
 class EmployeeManagementPage extends StatefulWidget {
-  final int selectedIndex;
   
   const EmployeeManagementPage({
-    super.key, 
-    required this.selectedIndex
+    super.key,
   });
 
   @override
@@ -89,6 +88,15 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
       _filterEmployees(_searchController.text);
     });
   }
+  
+  void _openSideMenu() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        pageBuilder: (_, __, ___) => const RoleBasedSideMenu(),
+      ),
+    );
+  }
 
   void _navigateToAddEmployee() async {
     final result = await Navigator.push(
@@ -133,7 +141,7 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
               onLeftButtonPressed: () => Navigator.pop(context),
               headingText: 'Employee',
               rightIcon: Iconsax.menu_1,
-              onRightButtonPressed: () {},
+              onRightButtonPressed: _openSideMenu,
             ),
             const SizedBox(height: 20),
             
@@ -243,7 +251,6 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
         ),
       ),
       extendBody: true,
-      bottomNavigationBar: const DynamicFooter(),
     );
   }
 

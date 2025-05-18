@@ -9,8 +9,7 @@ import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/order_detail_widget.dart';
 
 class ReceivedOrdersPage extends StatefulWidget {
-  final int selectedIndex;
-  const ReceivedOrdersPage({super.key, required this.selectedIndex});
+  const ReceivedOrdersPage({super.key});
 
   @override
   State<ReceivedOrdersPage> createState() => _ReceivedOrdersPageState();
@@ -84,8 +83,7 @@ class _ReceivedOrdersPageState extends State<ReceivedOrdersPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final navbarState = Provider.of<NavbarState>(context, listen: false);
-      navbarState.updateIndex(widget.selectedIndex);
+      Provider.of<NavbarState>(context, listen: false);
     });
     supabase.from('orders').stream(primaryKey: ['order_id']).listen((event) {
       _fetchOrders();
@@ -196,8 +194,7 @@ class _ReceivedOrdersPageState extends State<ReceivedOrdersPage> {
           ],
         ),
       ),
-    extendBody: true, // Important for curved navigation bar
-      bottomNavigationBar: const DynamicFooter(), // Using DynamicFooter instead
+    extendBody: true, // Important for curved navigation bar  
     );
   }
 }

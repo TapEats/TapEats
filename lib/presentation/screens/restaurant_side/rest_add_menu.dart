@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
-import 'package:tapeats/presentation/widgets/custom_footer_five_button_widget.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 
 class AddMenuPage extends StatelessWidget {
@@ -138,11 +137,6 @@ class AddMenuPage extends StatelessWidget {
             ),
           ],
         ),
-      ),
-
-      // Custom Footer Section
-      bottomNavigationBar: CustomFiveFooter(
-        selectedIndex: selectedIndex, // Ensure the correct index is passed
       ),
     );
   }

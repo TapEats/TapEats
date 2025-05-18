@@ -60,6 +60,8 @@ class _ActiveOrdersCarouselState extends State<ActiveOrdersCarousel> {
       print('Fetching active orders...');
     }
 
+    if (!mounted) return; // Add this line
+    
     setState(() {
       _isLoading = true;
       _error = null;
@@ -68,6 +70,7 @@ class _ActiveOrdersCarouselState extends State<ActiveOrdersCarousel> {
     final userPhoneNumber = supabase.auth.currentUser?.phone;
     
     if (userPhoneNumber == null) {
+      if (!mounted) return; // Add this check
       setState(() {
         _isLoading = false;
         _error = 'No user phone number found';
@@ -93,9 +96,16 @@ class _ActiveOrdersCarouselState extends State<ActiveOrdersCarousel> {
         print('Supabase response: $response');
       }
 
+      if (!mounted) return; // Add this check
+      
       if (response.isNotEmpty) {
         setState(() {
           activeOrders = List<Map<String, dynamic>>.from(response);
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          activeOrders = [];
           _isLoading = false;
         });
       }
@@ -103,6 +113,7 @@ class _ActiveOrdersCarouselState extends State<ActiveOrdersCarousel> {
       if (kDebugMode) {
         print('Error fetching orders: $e');
       }
+      if (!mounted) return; // Add this check
       setState(() {
         _isLoading = false;
         _error = 'Error loading orders: $e';
