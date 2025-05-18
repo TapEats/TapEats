@@ -9,11 +9,9 @@ import 'package:tapeats/presentation/widgets/search_bar.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 
 class RecipeCostsPage extends StatefulWidget {
-  final int selectedIndex;
   
   const RecipeCostsPage({
     super.key,
-    this.selectedIndex = 3, // Default to inventory tab index
   });
 
   @override
@@ -37,7 +35,6 @@ class _RecipeCostsPageState extends State<RecipeCostsPage> {
     
     // Update the navbar state with the correct index
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<NavbarState>(context, listen: false).updateIndex(widget.selectedIndex);
       _checkAndCreateRecipeTables();
       _loadInitialData();
     });

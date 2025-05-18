@@ -10,11 +10,9 @@ import 'package:tapeats/presentation/widgets/search_bar.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 
 class PurchaseOrdersPage extends StatefulWidget {
-  final int selectedIndex;
   
   const PurchaseOrdersPage({
-    super.key,
-    this.selectedIndex = 3, // Default to inventory tab index
+    super.key, // Default to inventory tab index
   });
 
   @override
@@ -40,7 +38,6 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
     
     // Update the navbar state with the correct index
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<NavbarState>(context, listen: false).updateIndex(widget.selectedIndex);
       _checkAndCreatePurchaseOrderTables();
       _loadInitialData();
     });

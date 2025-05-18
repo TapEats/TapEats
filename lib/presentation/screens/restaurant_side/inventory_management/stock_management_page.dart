@@ -9,12 +9,9 @@ import 'package:tapeats/presentation/widgets/search_bar.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 
 class StockManagementPage extends StatefulWidget {
-  // Make selectedIndex optional with a default value
-  final int selectedIndex;
   
   const StockManagementPage({
-    super.key,
-    this.selectedIndex = 10, // Default to inventory tab index - adjust this to match your app's navbar structure
+    super.key, // Default to inventory tab index - adjust this to match your app's navbar structure
   });
 
   @override
@@ -37,7 +34,6 @@ class _StockManagementPageState extends State<StockManagementPage> {
     
     // Update the navbar state with the correct index
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<NavbarState>(context, listen: false).updateIndex(widget.selectedIndex);
       _fetchInventoryItems();
     });
   }

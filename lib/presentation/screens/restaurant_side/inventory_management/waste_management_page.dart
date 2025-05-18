@@ -10,11 +10,9 @@ import 'package:tapeats/presentation/widgets/search_bar.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 
 class WasteManagementPage extends StatefulWidget {
-  final int selectedIndex;
   
   const WasteManagementPage({
     super.key,
-    this.selectedIndex = 3, // Default to inventory tab index
   });
 
   @override
@@ -51,7 +49,6 @@ class _WasteManagementPageState extends State<WasteManagementPage> {
     
     // Update the navbar state with the correct index
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<NavbarState>(context, listen: false).updateIndex(widget.selectedIndex);
       _checkAndCreateWasteTable();
       _loadData();
     });

@@ -10,11 +10,9 @@ import 'package:tapeats/presentation/widgets/search_bar.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 
 class ReceivingPage extends StatefulWidget {
-  final int selectedIndex;
   
   const ReceivingPage({
     super.key,
-    this.selectedIndex = 3, // Default to inventory tab index
   });
 
   @override
@@ -36,7 +34,6 @@ class _ReceivingPageState extends State<ReceivingPage> {
     
     // Update the navbar state with the correct index
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<NavbarState>(context, listen: false).updateIndex(widget.selectedIndex);
       _loadInitialData();
     });
   }
