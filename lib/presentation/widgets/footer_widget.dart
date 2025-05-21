@@ -88,7 +88,15 @@ class _DynamicFooterState extends State<DynamicFooter> with SingleTickerProvider
   }
 
   List<IconData> _getIconsForRole(String? userRole) {
-    if (userRole == 'customer') {
+    if (userRole == 'super_admin' || userRole == 'developer_admin') {
+      return [
+      Iconsax.home_2,       
+      Iconsax.user_edit,    
+      Iconsax.setting_2,    
+      Iconsax.security_card, 
+      Iconsax.user,         
+    ];
+    } else if (userRole == 'customer') {
       return [Iconsax.home, Iconsax.book_saved, Iconsax.heart, Iconsax.user];
     } else if (userRole == 'restaurant_inventory_manager') {
       return [Iconsax.home, Iconsax.box, Iconsax.chart];

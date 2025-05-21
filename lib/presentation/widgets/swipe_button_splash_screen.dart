@@ -66,38 +66,48 @@ class _SwipeButtonSplashScreenState extends State<SwipeButtonSplashScreen>
   Future<void> _navigateBasedOnUserRole() async {
     final user = supabase.auth.currentUser;
 
-if (user != null) {
-  try {
-    final userRole = await _fetchUserRole(user.phone!);
-    
-    if (!mounted) return;
+    if (user != null) {
+      try {
+        final userRole = await _fetchUserRole(user.phone!);
+        
+        if (!mounted) return;
 
-    if (userRole == 'customer') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MainScreen(),
-        ),
-      );
-    } else if (userRole == 'restaurant_owner') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MainScreen(),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unknown user role')),
-      );
+        // List of supported roles that all navigate to MainScreen
+        // but with different layouts based on NavbarState
+        final supportedRoles = [
+          'customer',
+          'restaurant_owner',
+          'restaurant_manager',
+          'restaurant_inventory_manager',
+          'restaurant_chef',
+          'restaurant_waiter',
+          'restaurant_cashier',
+          'super_admin',
+          'developer_admin'
+        ];
+
+        if (supportedRoles.contains(userRole)) {
+          // For admin roles, we'll use the MainScreen which relies on NavbarState
+          // to display the appropriate content based on the user role
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MainScreen(),
+            ),
+          );
+        } else {
+          // Unknown role
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Unknown user role')),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
     }
-  } catch (e) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: ${e.toString()}')),
-    );
-  }
-}
   }
 
   // Fetch user role from the database

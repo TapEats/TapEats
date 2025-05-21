@@ -248,9 +248,7 @@ class _HomePageState extends State<HomePage> with RouteAware, AutomaticKeepAlive
     );
   }
 
-  // Rest of your methods (unchanged)...
   Widget _buildFlavorAdventureSection() {
-    // Your existing implementation
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Row(

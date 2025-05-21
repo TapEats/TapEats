@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tapeats/presentation/screens/admin/settings_admin_page.dart';
+import 'package:tapeats/presentation/screens/admin/admin_panel.dart';
+import 'package:tapeats/presentation/screens/admin/system_admin_page.dart';
+import 'package:tapeats/presentation/screens/admin/users_admin_page.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/employee_page.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/inventory_management/inventory_management_page.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/reports_page.dart';
@@ -259,7 +263,16 @@ class NavbarState extends ChangeNotifier {
   }
 // In NavbarState.dart - FIX THE getPagesForRole() METHOD:
 List<Widget> getPagesForRole() {
-  if (_userRole == 'customer') {
+    if (_userRole == 'super_admin' || _userRole == 'developer_admin') {
+    // Admin role - the Admin panel should be the first page
+    return [
+      const AdminDashboardPage(),  
+      const UsersAdminPage(),    
+      const SystemAdminPage(),   
+      const SettingsAdminPage(), 
+      const ProfilePage(),       
+    ];
+  } else if (_userRole == 'customer') {
     return [
       const HomePage(),
       const MenuPage(),

@@ -80,6 +80,14 @@ class MyApp extends StatelessWidget {
           });
           return MainScreen();
         },
+        '/admin': (context) {
+          // For admin users, update NavbarState to select the admin tab (index 0)
+          final navbarState = Provider.of<NavbarState>(context, listen: false);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            navbarState.updateIndex(0);
+          });
+          return MainScreen();
+        },
       },
       // Handle undefined routes
       onUnknownRoute: (settings) {

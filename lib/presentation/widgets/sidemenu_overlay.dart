@@ -3,6 +3,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:tapeats/presentation/screens/admin/admin_panel.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/employee_page.dart';
 import 'package:tapeats/presentation/screens/user_side/notification_page.dart';
 import 'package:tapeats/presentation/state_management/navbar_state.dart';
@@ -71,6 +72,17 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
 
   // Define all possible menu items across all roles
   final List<MenuItem> _allMenuItems = [
+    //Admin Menu Items
+    MenuItem(
+      title: 'Admin Panel',
+      icon: Iconsax.setting,
+      page: const AdminDashboardPage(),
+      allowedRoles: [
+        'super_admin',
+        'developer_admin'
+      ],
+    ),
+
     // Customer Menu Items
     MenuItem(
       title: 'Home',
