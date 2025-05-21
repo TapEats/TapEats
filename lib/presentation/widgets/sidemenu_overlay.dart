@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:tapeats/presentation/screens/admin/admin_panel.dart';
+import 'package:tapeats/presentation/screens/admin/settings_admin_page.dart';
+import 'package:tapeats/presentation/screens/admin/system_admin_page.dart';
+import 'package:tapeats/presentation/screens/admin/users_admin_page.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/employee_page.dart';
 import 'package:tapeats/presentation/screens/user_side/notification_page.dart';
 import 'package:tapeats/presentation/state_management/navbar_state.dart';
@@ -75,8 +78,48 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
     //Admin Menu Items
     MenuItem(
       title: 'Admin Panel',
-      icon: Iconsax.setting,
+      icon: Iconsax.home_2,
       page: const AdminDashboardPage(),
+      allowedRoles: [
+        'super_admin',
+        'developer_admin'
+      ],
+    ),
+
+    MenuItem(
+      title: 'User Management',
+      icon: Iconsax.user_edit,
+      page: const UsersAdminPage(),
+      allowedRoles: [
+        'super_admin',
+        'developer_admin'
+      ],
+    ),
+
+    MenuItem(
+      title: 'System Dashboard',
+      icon: Iconsax.cpu,
+      page: const SystemAdminPage(),
+      allowedRoles: [
+        'super_admin',
+        'developer_admin'
+      ],
+    ),
+
+    MenuItem(
+      title: 'Admin Settings',
+      icon: Iconsax.setting_2,
+      page: const SettingsAdminPage(),
+      allowedRoles: [
+        'super_admin',
+        'developer_admin'
+      ],
+    ),
+
+    MenuItem(
+      title: 'Profile Page',
+      icon: Iconsax.user,
+      page: const ProfilePage(),
       allowedRoles: [
         'super_admin',
         'developer_admin'

@@ -92,8 +92,8 @@ class _DynamicFooterState extends State<DynamicFooter> with SingleTickerProvider
       return [
       Iconsax.home_2,       
       Iconsax.user_edit,    
-      Iconsax.setting_2,    
-      Iconsax.security_card, 
+      Iconsax.cpu,    
+      Iconsax.setting_2, 
       Iconsax.user,         
     ];
     } else if (userRole == 'customer') {

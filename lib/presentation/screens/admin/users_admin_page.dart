@@ -693,7 +693,7 @@ class _UsersAdminPageState extends State<UsersAdminPage> {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFD0F0C0),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
