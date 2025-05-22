@@ -90,26 +90,62 @@ class _DynamicFooterState extends State<DynamicFooter> with SingleTickerProvider
   List<IconData> _getIconsForRole(String? userRole) {
     if (userRole == 'super_admin' || userRole == 'developer_admin') {
       return [
-      Iconsax.home_2,       
-      Iconsax.user_edit,    
-      Iconsax.cpu,    
-      Iconsax.setting_2, 
-      Iconsax.user,         
-    ];
+        Iconsax.home_2,      // Dashboard
+        Iconsax.user_edit,   // User Management
+        Iconsax.cpu,         // System
+        Iconsax.setting_2,   // Settings
+        Iconsax.user,        // Profile
+      ];
     } else if (userRole == 'customer') {
-      return [Iconsax.home, Iconsax.book_saved, Iconsax.heart, Iconsax.user];
-    } else if (userRole == 'restaurant_inventory_manager') {
-      return [Iconsax.home, Iconsax.box, Iconsax.chart];
+      return [
+        Iconsax.home,        // Home
+        Iconsax.book_saved,  // Menu
+        Iconsax.heart,       // Favourites
+        Iconsax.user,        // Profile
+      ];
+    } else if (userRole == 'restaurant_owner' || userRole == 'restaurant_manager') {
+      return [
+        Iconsax.home,        // Dashboard
+        Iconsax.receipt,     // Orders
+        Iconsax.element_4,   // Tables
+        Iconsax.box,         // Inventory
+        Iconsax.chart,       // Reports
+      ];
     } else if (userRole == 'restaurant_chef') {
-      return [Iconsax.home, Iconsax.book_1, Iconsax.box, Iconsax.coffee];
+      return [
+        Iconsax.home,        // Dashboard
+        Iconsax.receipt,     // Orders
+        Iconsax.book_1,      // Menu
+        Iconsax.box,         // Inventory
+      ];
     } else if (userRole == 'restaurant_waiter') {
-      return [Iconsax.home, Iconsax.book_1, Iconsax.element_4, Iconsax.calendar_1];
+      return [
+        Iconsax.home,        // Dashboard
+        Iconsax.receipt,     // Orders
+        Iconsax.element_4,   // Tables
+        Iconsax.add_square,  // New Order
+      ];
     } else if (userRole == 'restaurant_cashier') {
-      return [Iconsax.home, Iconsax.receipt, Iconsax.money, Iconsax.document_1];
-    } else if (userRole?.startsWith('restaurant_') ?? false) {
-      return [Iconsax.home, Iconsax.receipt, Iconsax.element_4, Iconsax.box, Iconsax.chart];
+      return [
+        Iconsax.home,        // Dashboard
+        Iconsax.receipt,     // Orders
+        Iconsax.money,       // Payments
+        Iconsax.chart,       // Reports
+      ];
+    } else if (userRole == 'restaurant_inventory_manager') {
+      return [
+        Iconsax.home,        // Dashboard
+        Iconsax.box,         // Inventory
+        Iconsax.chart,       // Reports
+      ];
     } else {
-      return [Iconsax.home, Iconsax.book_saved, Iconsax.heart, Iconsax.user];
+      // Default to customer icons
+      return [
+        Iconsax.home,
+        Iconsax.book_saved,
+        Iconsax.heart,
+        Iconsax.user,
+      ];
     }
   }
 

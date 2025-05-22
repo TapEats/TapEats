@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/login_page.dart';
+import 'package:tapeats/presentation/state_management/branch_context.dart';
 import 'package:tapeats/presentation/state_management/cart_state.dart';
 import 'package:tapeats/presentation/state_management/navbar_state.dart';
 import 'package:tapeats/presentation/state_management/slider_state.dart';
@@ -42,6 +43,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => CartState()),
         ChangeNotifierProvider(create: (_) => SliderState()),
         ChangeNotifierProvider(create: (_) => NavbarState()),
+        ChangeNotifierProvider(create: (_) => BranchContext()),
         ChangeNotifierProvider.value(value: notificationService),
       ],
       child: const MyApp(),

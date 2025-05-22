@@ -6,7 +6,11 @@ import 'package:tapeats/presentation/screens/admin/system_admin_page.dart';
 import 'package:tapeats/presentation/screens/admin/users_admin_page.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/employee_page.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/inventory_management/inventory_management_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/payment_history_page.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/reports_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/rest_edit_add_menu.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/rest_ordering_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/rest_table_page.dart';
 
 // Import customer pages
 import 'package:tapeats/presentation/screens/user_side/home_page.dart';
@@ -189,19 +193,20 @@ class NavbarState extends ChangeNotifier {
   
   // Get the labels for bottom navigation bar items based on role
   List<String> getNavBarLabels() {
-    if (_userRole == 'customer') {
+    if (_userRole == 'super_admin' || _userRole == 'developer_admin') {
+      return ['Dashboard', 'Users', 'System', 'Settings', 'Profile'];
+    } else if (_userRole == 'customer') {
       return ['Home', 'Menu', 'Favourites', 'Profile'];
+    } else if (_userRole == 'restaurant_owner' || _userRole == 'restaurant_manager') {
+      return ['Dashboard', 'Orders', 'Tables', 'Inventory', 'Reports'];
+    } else if (_userRole == 'restaurant_chef') {
+      return ['Dashboard', 'Orders', 'Menu', 'Inventory'];
+    } else if (_userRole == 'restaurant_waiter') {
+      return ['Dashboard', 'Orders', 'Tables', 'New Order'];
+    } else if (_userRole == 'restaurant_cashier') {
+      return ['Dashboard', 'Orders', 'Payments', 'Reports'];
     } else if (_userRole == 'restaurant_inventory_manager') {
       return ['Dashboard', 'Inventory', 'Reports'];
-    } else if (_userRole == 'restaurant_chef') {
-      return ['Dashboard', 'Orders', 'Inventory', 'Kitchen'];
-    } else if (_userRole == 'restaurant_waiter') {
-      return ['Dashboard', 'Orders', 'Tables', 'Reservations'];
-    } else if (_userRole == 'restaurant_cashier') {
-      return ['Dashboard', 'Orders', 'Payments', 'Records'];
-    } else if (_userRole?.startsWith('restaurant_') ?? false) {
-      // Update to match your actual pages
-      return ['Dashboard', 'Orders', 'Inventory', 'Reports', 'Employees'];
     } else {
       return ['Home', 'Menu', 'Favourites', 'Profile'];
     }
@@ -261,10 +266,9 @@ class NavbarState extends ChangeNotifier {
     // Default deny if role is unknown
     return false;
   }
-// In NavbarState.dart - FIX THE getPagesForRole() METHOD:
+
 List<Widget> getPagesForRole() {
-    if (_userRole == 'super_admin' || _userRole == 'developer_admin') {
-    // Admin role - the Admin panel should be the first page
+  if (_userRole == 'super_admin' || _userRole == 'developer_admin') {
     return [
       const AdminDashboardPage(),  
       const UsersAdminPage(),    
@@ -279,42 +283,45 @@ List<Widget> getPagesForRole() {
       const FavouritesPage(),
       const ProfilePage(),
     ];
-  } else if (_userRole == 'restaurant_inventory_manager') {
+  } else if (_userRole == 'restaurant_owner' || _userRole == 'restaurant_manager') {
+    // Owner and Manager get full access (5 main tabs)
     return [
-      const RestaurantHomePage(),
-      const InventoryManagementPage(),
-      const ReportsPage(),
+      const RestaurantHomePage(),        // Dashboard
+      const ReceivedOrdersPage(),        // Orders
+      const TableManagementScreen(),             // Tables
+      const InventoryManagementPage(),   // Inventory
+      const ReportsPage(),               // Reports
     ];
   } else if (_userRole == 'restaurant_chef') {
+    // Chef gets access to orders, menu, and inventory
     return [
-      const RestaurantHomePage(),
-      const ReceivedOrdersPage(),
-      const InventoryManagementPage(),
-      const ReceivedOrdersPage(),
+      const RestaurantHomePage(),        // Dashboard
+      const ReceivedOrdersPage(),        // Orders
+      const MenuManagementScreen(),       // Menu Management
+      const InventoryManagementPage(),   // Inventory (view only)
     ];
   } else if (_userRole == 'restaurant_waiter') {
+    // Waiter gets access to orders and tables
     return [
-      const RestaurantHomePage(),
-      const ReceivedOrdersPage(),
-      const ReceivedOrdersPage(),
-      const ReceivedOrdersPage(),
+      const RestaurantHomePage(),        // Dashboard
+      const ReceivedOrdersPage(),        // Orders
+      const TableManagementScreen(),             // Tables
+      const RestMenuPage(),          // Take Orders
     ];
   } else if (_userRole == 'restaurant_cashier') {
+    // Cashier gets access to orders and payments
     return [
-      const RestaurantHomePage(),
-      const ReceivedOrdersPage(),
-      const ReceivedOrdersPage(),
-      const ReceivedOrdersPage(),
+      const RestaurantHomePage(),        // Dashboard
+      const ReceivedOrdersPage(),        // Orders
+      const PaymentHistoryPage(),        // Payments
+      const ReportsPage(),               // Financial Reports
     ];
-  } else if (_userRole == 'restaurant_owner' ||
-             _userRole == 'restaurant_manager') {
-    // Update this to match the actual navigation structure
+  } else if (_userRole == 'restaurant_inventory_manager') {
+    // Inventory manager focused on stock and reports
     return [
-      const RestaurantHomePage(),                // Dashboard
-      const ReceivedOrdersPage(), // Orders
-      const InventoryManagementPage(), // Inventory
-      const ReportsPage(),        // Reports
-      const EmployeeManagementPage(), // Employee Management
+      const RestaurantHomePage(),        // Dashboard
+      const InventoryManagementPage(),   // Inventory
+      const ReportsPage(),               // Inventory Reports
     ];
   } else {
     // Default to customer pages

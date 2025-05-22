@@ -7,7 +7,16 @@ import 'package:tapeats/presentation/screens/admin/admin_panel.dart';
 import 'package:tapeats/presentation/screens/admin/settings_admin_page.dart';
 import 'package:tapeats/presentation/screens/admin/system_admin_page.dart';
 import 'package:tapeats/presentation/screens/admin/users_admin_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/add_employee_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/edit_employee_page.dart';
 import 'package:tapeats/presentation/screens/restaurant_side/employee_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/inventory_management/inventory_management_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/multi_branch_management_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/payment_history_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/rest_edit_add_menu.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/rest_ordering_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/rest_table_page.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/subscription_plan_page.dart';
 import 'package:tapeats/presentation/screens/user_side/notification_page.dart';
 import 'package:tapeats/presentation/state_management/navbar_state.dart';
 import 'package:tapeats/services/profile_image_service.dart';
@@ -75,345 +84,210 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
 
   // Define all possible menu items across all roles
   final List<MenuItem> _allMenuItems = [
-    //Admin Menu Items
-    MenuItem(
-      title: 'Admin Panel',
-      icon: Iconsax.home_2,
-      page: const AdminDashboardPage(),
-      allowedRoles: [
-        'super_admin',
-        'developer_admin'
-      ],
-    ),
+      // === ADMIN MENU ITEMS ===
+      MenuItem(
+        title: 'Admin Panel',
+        icon: Iconsax.home_2,
+        page: const AdminDashboardPage(),
+        allowedRoles: ['super_admin', 'developer_admin'],
+      ),
+      MenuItem(
+        title: 'User Management',
+        icon: Iconsax.user_edit,
+        page: const UsersAdminPage(),
+        allowedRoles: ['super_admin', 'developer_admin'],
+      ),
+      MenuItem(
+        title: 'System Dashboard',
+        icon: Iconsax.cpu,
+        page: const SystemAdminPage(),
+        allowedRoles: ['super_admin', 'developer_admin'],
+      ),
+      MenuItem(
+        title: 'Admin Settings',
+        icon: Iconsax.setting_2,
+        page: const SettingsAdminPage(),
+        allowedRoles: ['super_admin', 'developer_admin'],
+      ),
 
-    MenuItem(
-      title: 'User Management',
-      icon: Iconsax.user_edit,
-      page: const UsersAdminPage(),
-      allowedRoles: [
-        'super_admin',
-        'developer_admin'
-      ],
-    ),
+      // === CUSTOMER MENU ITEMS ===
+      MenuItem(
+        title: 'Home',
+        icon: Iconsax.home,
+        page: const HomePage(),
+        allowedRoles: ['customer'],
+      ),
+      MenuItem(
+        title: 'Menu',
+        icon: Iconsax.book_saved,
+        page: const MenuPage(),
+        allowedRoles: ['customer'],
+      ),
+      MenuItem(
+        title: 'Favourites',
+        icon: Iconsax.heart,
+        page: const FavouritesPage(),
+        allowedRoles: ['customer'],
+      ),
+      MenuItem(
+        title: 'Order History',
+        icon: Iconsax.calendar,
+        page: const OrderHistoryPage(cartItems: {}, totalItems: 0),
+        allowedRoles: ['customer'],
+      ),
+      MenuItem(
+        title: 'Profile',
+        icon: Iconsax.user,
+        page: const ProfilePage(),
+        allowedRoles: ['customer', 'super_admin', 'developer_admin'],
+      ),
+      MenuItem(
+        title: 'Notifications',
+        icon: Iconsax.notification,
+        page: const NotificationPage(),
+        allowedRoles: ['customer'],
+      ),
 
-    MenuItem(
-      title: 'System Dashboard',
-      icon: Iconsax.cpu,
-      page: const SystemAdminPage(),
-      allowedRoles: [
-        'super_admin',
-        'developer_admin'
-      ],
-    ),
-
-    MenuItem(
-      title: 'Admin Settings',
-      icon: Iconsax.setting_2,
-      page: const SettingsAdminPage(),
-      allowedRoles: [
-        'super_admin',
-        'developer_admin'
-      ],
-    ),
-
-    MenuItem(
-      title: 'Profile Page',
-      icon: Iconsax.user,
-      page: const ProfilePage(),
-      allowedRoles: [
-        'super_admin',
-        'developer_admin'
-      ],
-    ),
-
-    // Customer Menu Items
-    MenuItem(
-      title: 'Home',
-      icon: Iconsax.home,
-      page: const HomePage(),
-      allowedRoles: ['customer'],
-    ),
-    MenuItem(
-      title: 'Menu',
-      icon: Iconsax.book_saved,
-      page: const MenuPage(),
-      allowedRoles: ['customer'],
-    ),
-    MenuItem(
-      title: 'Favourites',
-      icon: Iconsax.heart,
-      page: const FavouritesPage(),
-      allowedRoles: ['customer'],
-    ),
-    MenuItem(
-      title: 'Order History',
-      icon: Iconsax.calendar,
-      page: const OrderHistoryPage(cartItems: {}, totalItems: 0),
-      allowedRoles: ['customer'],
-    ),
-    MenuItem(
-      title: 'Profile',
-      icon: Iconsax.user,
-      page: const ProfilePage(),
-      allowedRoles: ['customer'],
-    ),
-    MenuItem(
-      title: 'Notifications',
-      icon: Iconsax.notification,
-      page: const NotificationPage(),
-      allowedRoles: ['customer'],
-    ),
-
-    // === RESTAURANT COMMON PAGES ===
-    // Dashboard (For all restaurant roles)
-    MenuItem(
-      title: 'Dashboard',
-      icon: Iconsax.home,
-      page: const RestaurantHomePage(),
-      allowedRoles: [
-        'restaurant_owner', 
-        'restaurant_manager', 
-        'restaurant_chef', 
-        'restaurant_waiter',
-        'restaurant_inventory_manager',
-        'restaurant_cashier'
-      ],
-    ),
-    
-    // // Active Orders (For roles that manage orders)
-    // MenuItem(
-    //   title: 'Active Orders',
-    //   icon: Iconsax.activity,
-    //   page: const ActiveOrdersPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner', 
-    //     'restaurant_manager', 
-    //     'restaurant_chef', 
-    //     'restaurant_waiter',
-    //     'restaurant_cashier'
-    //   ],
-    // ),
-    
-    // Received Orders
-    MenuItem(
-      title: 'Received Orders',
-      icon: Iconsax.receipt,
-      page: const ReceivedOrdersPage(),
-      allowedRoles: [
-        'restaurant_owner', 
-        'restaurant_manager', 
-        'restaurant_chef', 
-        'restaurant_waiter',
-        'restaurant_cashier'
-      ],
-    ),
-    
-    // // Menu View (Read-only for most)
-    // MenuItem(
-    //   title: 'Menu',
-    //   icon: Iconsax.book_1,
-    //   page: const MenuViewPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner', 
-    //     'restaurant_manager', 
-    //     'restaurant_chef', 
-    //     'restaurant_waiter',
-    //     'restaurant_cashier'
-    //   ],
-    // ),
-    
-    // // Tables Overview
-    // MenuItem(
-    //   title: 'Tables',
-    //   icon: Iconsax.element_4,
-    //   page: const TablesOverviewPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner', 
-    //     'restaurant_manager',
-    //     'restaurant_waiter'
-    //   ],
-    // ),
-    
-    // // Table Orders
-    // MenuItem(
-    //   title: 'Table Orders',
-    //   icon: Iconsax.clipboard_text,
-    //   page: const TableOrdersPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner', 
-    //     'restaurant_manager',
-    //     'restaurant_waiter',
-    //     'restaurant_cashier'
-    //   ],
-    // ),
-    
-    // // === OWNER & MANAGER SPECIFIC PAGES ===
-    
-    // // Edit Menu
-    // MenuItem(
-    //   title: 'Edit Menu',
-    //   icon: Iconsax.edit,
-    //   page: const EditMenuPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner',
-    //     'restaurant_manager'
-    //   ],
-    // ),
-    
-    // // Inventory Management
-    // MenuItem(
-    //   title: 'Inventory',
-    //   icon: Iconsax.box,
-    //   page: const InventoryManagementPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner',
-    //     'restaurant_manager',
-    //     'restaurant_inventory_manager'
-    //   ],
-    // ),
-    
-    // Reports & Analytics
-    MenuItem(
-      title: 'Reports',
-      icon: Iconsax.chart,
-      page: const ReportsPage(), // Using selectedIndex: 0 since we're not using navbar
-      allowedRoles: [
-        'restaurant_owner',
-        'restaurant_manager',
-        'restaurant_inventory_manager', // Limited reports for inventory
-        'restaurant_cashier' // Added cashier for access to reports
-      ],
-    ),
-    
-    // Employee Management
-    MenuItem(
-      title: 'Employees',
-      icon: Iconsax.people,
-      page: const EmployeeManagementPage(),
-      allowedRoles: [
-        'restaurant_owner',
-        'restaurant_manager'
-      ],
-    ),
-    
-    // // === INVENTORY MANAGER SPECIFIC ===
-    
-    // // Stock Management
-    // MenuItem(
-    //   title: 'Stock',
-    //   icon: Iconsax.box_1,
-    //   page: const StockManagementPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner',
-    //     'restaurant_manager',
-    //     'restaurant_inventory_manager',
-    //     'restaurant_chef' // Read-only for chef
-    //   ],
-    // ),
-    
-    // // Supplier Management
-    // MenuItem(
-    //   title: 'Suppliers',
-    //   icon: Iconsax.truck,
-    //   page: const SupplierManagementPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner',
-    //     'restaurant_manager',
-    //     'restaurant_inventory_manager'
-    //   ],
-    // ),
-    
-    // // === CHEF SPECIFIC ===
-    
-    // // Kitchen Display
-    // MenuItem(
-    //   title: 'Kitchen Display',
-    //   icon: Iconsax.cooking,
-    //   page: const KitchenDisplayPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner',
-    //     'restaurant_manager',
-    //     'restaurant_chef'
-    //   ],
-    // ),
-    
-    // // Recipe Management
-    // MenuItem(
-    //   title: 'Recipes',
-    //   icon: Iconsax.document_text,
-    //   page: const RecipeManagementPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner',
-    //     'restaurant_manager',
-    //     'restaurant_chef'
-    //   ],
-    // ),
-    
-    // // === WAITER SPECIFIC ===
-    
-    // // Reservation Management
-    // MenuItem(
-    //   title: 'Reservations',
-    //   icon: Iconsax.calendar_1,
-    //   page: const ReservationManagementPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner',
-    //     'restaurant_manager',
-    //     'restaurant_waiter'
-    //   ],
-    // ),
-    
-    // // Customer Notes
-    // MenuItem(
-    //   title: 'Customer Notes',
-    //   icon: Iconsax.note_1,
-    //   page: const CustomerNotesPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner',
-    //     'restaurant_manager',
-    //     'restaurant_waiter'
-    //   ],
-    // ),
-    
-    // // === CASHIER SPECIFIC ===
-    
-    // // Payment Processing
-    // MenuItem(
-    //   title: 'Payments',
-    //   icon: Iconsax.money,
-    //   page: const PaymentProcessingPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner',
-    //     'restaurant_manager',
-    //     'restaurant_cashier'
-    //   ],
-    // ),
-    
-    // // End-of-Day Reconciliation
-    // MenuItem(
-    //   title: 'Reconciliation',
-    //   icon: Iconsax.document_1,
-    //   page: const ReconciliationPage(),
-    //   allowedRoles: [
-    //     'restaurant_owner',
-    //     'restaurant_manager',
-    //     'restaurant_cashier'
-    //   ],
-    // ),
-    
-    // // === SHARED SETTINGS ===
-    
-    // // Restaurant Profile Settings
-    // MenuItem(
-    //   title: 'Settings',
-    //   icon: Iconsax.setting,
-    //   page: const RestaurantProfilePage(),
-    //   allowedRoles: [
-    //     'restaurant_owner',
-    //     'restaurant_manager'
-    //   ],
-    // ),
-  ];
+      // === RESTAURANT COMMON PAGES ===
+      MenuItem(
+        title: 'Dashboard',
+        icon: Iconsax.home,
+        page: const RestaurantHomePage(),
+        allowedRoles: [
+          'restaurant_owner', 
+          'restaurant_manager', 
+          'restaurant_chef', 
+          'restaurant_waiter',
+          'restaurant_inventory_manager',
+          'restaurant_cashier'
+        ],
+      ),
+      
+      // === ORDER MANAGEMENT ===
+      MenuItem(
+        title: 'Received Orders',
+        icon: Iconsax.receipt,
+        page: const ReceivedOrdersPage(),
+        allowedRoles: [
+          'restaurant_owner', 
+          'restaurant_manager', 
+          'restaurant_chef', 
+          'restaurant_waiter',
+          'restaurant_cashier'
+        ],
+      ),
+      MenuItem(
+        title: 'New Order',
+        icon: Iconsax.add_square,
+        page: const RestMenuPage(),
+        allowedRoles: [
+          'restaurant_owner', 
+          'restaurant_manager',
+          'restaurant_waiter'
+        ],
+      ),
+      
+      // === TABLE MANAGEMENT ===
+      MenuItem(
+        title: 'Tables',
+        icon: Iconsax.element_4,
+        page: const TableManagementScreen(),
+        allowedRoles: [
+          'restaurant_owner', 
+          'restaurant_manager',
+          'restaurant_waiter'
+        ],
+      ),
+      
+      // === MENU MANAGEMENT ===
+      MenuItem(
+        title: 'Edit Menu',
+        icon: Iconsax.edit,
+        page: const MenuManagementScreen(),
+        allowedRoles: [
+          'restaurant_owner',
+          'restaurant_manager',
+          'restaurant_chef'
+        ],
+      ),
+      
+      // === INVENTORY MANAGEMENT ===
+      MenuItem(
+        title: 'Inventory',
+        icon: Iconsax.box,
+        page: const InventoryManagementPage(),
+        allowedRoles: [
+          'restaurant_owner',
+          'restaurant_manager',
+          'restaurant_inventory_manager',
+          'restaurant_chef'  // View-only access
+        ],
+      ),
+      
+      // === REPORTS & ANALYTICS ===
+      MenuItem(
+        title: 'Reports',
+        icon: Iconsax.chart,
+        page: const ReportsPage(),
+        allowedRoles: [
+          'restaurant_owner',
+          'restaurant_manager',
+          'restaurant_inventory_manager',
+          'restaurant_cashier'
+        ],
+      ),
+      
+      // === EMPLOYEE MANAGEMENT ===
+      MenuItem(
+        title: 'Employees',
+        icon: Iconsax.people,
+        page: const EmployeeManagementPage(),
+        allowedRoles: [
+          'restaurant_owner',
+          'restaurant_manager'
+        ],
+      ),
+      MenuItem(
+        title: 'Add Employee',
+        icon: Iconsax.user_add,
+        page: const AddEmployeePage(),
+        allowedRoles: [
+          'restaurant_owner',
+          'restaurant_manager'
+        ],
+      ),
+      
+      // === SUBSCRIPTION & BILLING ===
+      MenuItem(
+        title: 'Subscription',
+        icon: Iconsax.crown,
+        page: const SubscriptionPlansPage(),
+        allowedRoles: [
+          'restaurant_owner',
+          'restaurant_manager',
+        ],
+      ),
+      MenuItem(
+        title: 'Payment History',
+        icon: Iconsax.receipt_2,
+        page: const PaymentHistoryPage(),
+        allowedRoles: [
+          'restaurant_owner',
+          'restaurant_manager',
+          'restaurant_cashier'
+        ],
+      ),
+      
+      // === MULTI-BRANCH MANAGEMENT ===
+      MenuItem(
+        title: 'Branch Management',
+        icon: Iconsax.building,
+        page: const MultiBranchManagementPage(),
+        allowedRoles: [
+          'restaurant_owner',
+        ],
+      ),
+    ];
 
   // Filtered menu items based on user role
   List<MenuItem> _filteredMenuItems = [];
@@ -483,46 +357,33 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
 
   void _groupMenuItems() {
     _groupedMenuItems = {
-      'Main': [], // For dashboard and main navigation
-      'Orders': [], // For order management
-      'Menu & Tables': [], // For menu and table management
-      'Inventory': [], // For inventory and stock
-      'Reports': [], // For analytics and reports
-      'Staff': [], // For employee management
-      'Settings': [], // For settings and configuration
+      'Main': [],              // Dashboard
+      'Orders': [],            // Order management
+      'Operations': [],        // Tables, Menu
+      'Management': [],        // Inventory, Employees
+      'Analytics': [],         // Reports
+      'Administration': [],    // Subscription, Branches
+      'Settings': [],          // Profile, Settings
     };
 
     for (var item in _filteredMenuItems) {
-      if (item.title == 'Dashboard' || 
-          item.title == 'Home') {
+      if (item.title == 'Dashboard' || item.title == 'Home') {
         _groupedMenuItems['Main']!.add(item);
-      } else if (item.title.contains('Order') || 
-                item.title == 'Kitchen Display' ||
-                item.title == 'Payments' ||
-                item.title == 'Reconciliation') {
+      } else if (item.title.contains('Order') || item.title == 'New Order') {
         _groupedMenuItems['Orders']!.add(item);
-      } else if (item.title.contains('Menu') || 
-                item.title.contains('Table') ||
-                item.title == 'Reservations') {
-        _groupedMenuItems['Menu & Tables']!.add(item);
+      } else if (item.title == 'Tables' || item.title.contains('Menu')) {
+        _groupedMenuItems['Operations']!.add(item);
       } else if (item.title.contains('Inventory') || 
-                item.title.contains('Stock') ||
-                item.title == 'Suppliers' ||
-                item.title == 'Recipes') {
-        _groupedMenuItems['Inventory']!.add(item);
-      } else if (item.title.contains('Report') || 
-                item.title == 'Analytics') {
-        _groupedMenuItems['Reports']!.add(item);
-      } else if (item.title.contains('Employee') || 
-                item.title.contains('Role') ||
-                item.title.contains('Staff')) {
-        _groupedMenuItems['Staff']!.add(item);
-      } else if (item.title == 'Settings' || 
-                item.title == 'Profile') {
+                item.title.contains('Employee')) {
+        _groupedMenuItems['Management']!.add(item);
+      } else if (item.title.contains('Report')) {
+        _groupedMenuItems['Analytics']!.add(item);
+      } else if (item.title.contains('Subscription') || 
+                item.title.contains('Payment') ||
+                item.title.contains('Branch')) {
+        _groupedMenuItems['Administration']!.add(item);
+      } else if (item.title == 'Settings' || item.title == 'Profile') {
         _groupedMenuItems['Settings']!.add(item);
-      } else {
-        // Add to Main if doesn't fit elsewhere
-        _groupedMenuItems['Main']!.add(item);
       }
     }
 
@@ -576,10 +437,32 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
   void _navigateToPage(Widget page) async {
     // Special handling for standalone pages that don't affect bottom navbar
     bool isStandalonePage = 
-        page is ReceivedOrdersPage ||
+        // Customer standalone pages
         page is OrderHistoryPage ||
+        page is NotificationPage ||
+        
+        // Restaurant order-related standalone pages
+        page is ReceivedOrdersPage ||
+        page is RestMenuPage ||
+        
+        // Restaurant management standalone pages
         page is EmployeeManagementPage ||
-        page is ReportsPage; // Add ReportsPage as a standalone page
+        page is AddEmployeePage ||
+        page is EditEmployeePage ||
+        page is ReportsPage ||
+        page is MenuManagementScreen ||
+        page is TableManagementScreen ||
+        
+        // Subscription & Billing pages
+        page is SubscriptionPlansPage ||
+        page is PaymentHistoryPage ||
+        page is MultiBranchManagementPage ||
+        
+        // Admin standalone pages
+        page is UsersAdminPage ||
+        page is SystemAdminPage ||
+        page is SettingsAdminPage ||
+        page is AdminDashboardPage;
     
     if (isStandalonePage) {
       // Wait for animation to complete before navigation

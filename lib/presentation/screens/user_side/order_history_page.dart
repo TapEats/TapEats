@@ -184,7 +184,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                           status: order['status'],
                           onReorder: () => _reorder(order), // Reorder logic
                           isRestaurantSide:
-                              false, // Show Reorder button for history
+                              false, currentPage: 'order_history_page', // Show Reorder button for history
                         );
                       },
                     ),
