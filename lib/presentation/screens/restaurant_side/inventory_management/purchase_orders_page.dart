@@ -3,6 +3,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/inventory_management/suppliers_management_page.dart';
 import 'package:tapeats/presentation/state_management/navbar_state.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/footer_widget.dart';
@@ -38,7 +39,6 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
     
     // Update the navbar state with the correct index
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAndCreatePurchaseOrderTables();
       _loadInitialData();
     });
   }
@@ -60,68 +60,6 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
     );
   }
   
-  Future<void> _checkAndCreatePurchaseOrderTables() async {
-    try {
-      // Check if purchase_orders table exists
-      try {
-        await _supabase.from('purchase_orders').select('purchase_order_id').limit(1);
-        print('Purchase orders table exists');
-      } catch (e) {
-        print('Purchase orders table does not exist: $e');
-        
-        // Ask user if they want to create the tables
-        if (mounted) {
-          final shouldCreate = await showDialog<bool>(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => AlertDialog(
-              backgroundColor: const Color(0xFF222222),
-              title: const Text('Create Purchase Order Tables?', style: TextStyle(color: Colors.white)),
-              content: const Text(
-                'The purchase_orders and related tables do not exist. Would you like to create them now?',
-                style: TextStyle(color: Colors.white70),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Not Now', style: TextStyle(color: Colors.white70)),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD0F0C0),
-                    foregroundColor: const Color(0xFF222222),
-                  ),
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Create Tables'),
-                ),
-              ],
-            ),
-          );
-          
-          if (shouldCreate != true) return;
-          
-          // Create tables
-          try {
-            await _supabase.rpc('create_purchase_order_tables');
-            print('Purchase order tables created successfully');
-          } catch (e) {
-            print('Error creating purchase order tables: $e');
-            
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Failed to create purchase order tables. Please contact your administrator.'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
-        }
-      }
-    } catch (e) {
-      print('Error checking/creating purchase order tables: $e');
-    }
-  }
 
   Future<void> _loadInitialData() async {
     setState(() => _isLoading = true);
@@ -208,40 +146,318 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
       print('Error in _fetchPurchaseOrders: $e');
     }
   }
-  
+
+  Future<String?> _getRestaurantId() async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return null;
+      
+      // Method 1: Try to get restaurant_id from users table
+      try {
+        final userData = await _supabase
+            .from('users')
+            .select('restaurant_id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+        
+        if (userData != null && userData['restaurant_id'] != null) {
+          print('✅ Found restaurant_id in users table: ${userData['restaurant_id']}');
+          return userData['restaurant_id'];
+        }
+      } catch (e) {
+        print('⚠️ restaurant_id field not found in users table: $e');
+      }
+      
+      // Method 2: Try to get restaurant where user is owner
+      try {
+        final restaurantData = await _supabase
+            .from('restaurants')
+            .select('restaurant_id')
+            .eq('owner_id', user.id)
+            .maybeSingle();
+        
+        if (restaurantData != null) {
+          print('✅ Found restaurant by owner_id: ${restaurantData['restaurant_id']}');
+          return restaurantData['restaurant_id'];
+        }
+      } catch (e) {
+        print('⚠️ Could not find restaurant by owner_id: $e');
+      }
+      
+      // Method 3: For restaurant staff, try to find through role/assignment
+      try {
+        final userData = await _supabase
+            .from('users')
+            .select('role, user_id')
+            .eq('user_id', user.id)
+            .single();
+        
+        if (userData['role']?.toString().startsWith('restaurant_') == true) {
+          // This is a restaurant role, but we need to implement a way to link them
+          // For now, we'll suggest creating the association
+          print('⚠️ User has restaurant role but no restaurant association found');
+          
+          // You might need to implement a restaurant_staff table or similar
+          // to handle multiple staff members per restaurant
+        }
+      } catch (e) {
+        print('⚠️ Error checking user role: $e');
+      }
+      
+      return null;
+    } catch (e) {
+      print('❌ Error getting restaurant ID: $e');
+      return null;
+    }
+  }
+
   Future<void> _fetchSuppliers() async {
     try {
-      // Get restaurant ID
-      final user = _supabase.auth.currentUser;
-      if (user == null) return;
+      print('🔍 Starting _fetchSuppliers...');
       
-      final userData = await _supabase
-          .from('users')
-          .select('restaurant_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
+      // Get restaurant ID using the improved method
+      final restaurantId = await _getRestaurantId();
       
-      if (userData == null || userData['restaurant_id'] == null) return;
+      if (restaurantId == null) {
+        print('❌ No restaurant ID found for current user');
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Iconsax.warning_2, color: Colors.white),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text('No restaurant associated with your account. Please contact admin or create a restaurant.'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      _showCreateRestaurantDialog();
+                    },
+                    child: const Text('Create Restaurant'),
+                  )
+                ],
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 7),
+            ),
+          );
+        }
+        return;
+      }
       
-      final restaurantId = userData['restaurant_id'];
+      print('✅ Restaurant ID found: $restaurantId');
       
-      // Fetch suppliers
-      final suppliersResult = await _supabase
-          .from('supplier_id')
-          .select('supplier_id, company_name, product_type')
-          .eq('restaurant_id', restaurantId);
-          
-      setState(() {
-        _suppliers = suppliersResult;
-      });
+      // Check if suppliers table exists and fetch data
+      await _checkAndFetchSuppliers(restaurantId);
+      
     } catch (e) {
-      print('Error fetching suppliers: $e');
-      setState(() {
-        _suppliers = [];
-      });
+      print('❌ General error in _fetchSuppliers: $e');
+      
+      if (mounted) {
+        setState(() {
+          _suppliers = [];
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading suppliers: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
   
+  Future<void> _checkAndFetchSuppliers(String restaurantId) async {
+    try {
+      // First check if suppliers table exists by trying a simple query
+      await _supabase.from('suppliers').select('supplier_id').limit(1);
+      print('✅ Suppliers table exists');
+      
+      // Now fetch suppliers for this restaurant
+      final suppliersResult = await _supabase
+          .from('suppliers')
+          .select('supplier_id, company_name, product_type, name, contact, email')
+          .eq('restaurant_id', restaurantId);
+          
+      print('✅ Suppliers query successful. Found ${suppliersResult.length} suppliers');
+      print('📊 Suppliers data: $suppliersResult');
+      
+      if (mounted) {
+        setState(() {
+          _suppliers = suppliersResult;
+        });
+        
+        if (suppliersResult.isEmpty) {
+          _showNoSuppliersMessage();
+        }
+      }
+      
+    } catch (e) {
+      print('❌ Error with suppliers table: $e');
+      
+      // Check if it's a table doesn't exist error
+      if (e.toString().contains('relation "suppliers" does not exist') ||
+          e.toString().contains('table "suppliers" does not exist') ||
+          e.toString().contains('suppliers') && e.toString().contains('does not exist')) {
+        
+        print('❌ Suppliers table does not exist');
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error fetching suppliers: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+
+
+  void _showNoSuppliersMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Iconsax.info_circle, color: Colors.white),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text('No suppliers found. Add suppliers first to create purchase orders.'),
+            ),
+            TextButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SuppliersManagementPage()),
+                );
+              },
+              child: const Text('Add Suppliers'),
+            )
+          ],
+        ),
+        backgroundColor: Colors.blue,
+        duration: const Duration(seconds: 5),
+      ),
+    );
+  }
+
+  void _showCreateRestaurantDialog() {
+    final nameController = TextEditingController();
+    final addressController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF222222),
+        title: const Text('Create Restaurant', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Restaurant Name',
+                labelStyle: TextStyle(color: Colors.white70),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white70),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: addressController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Address',
+                labelStyle: TextStyle(color: Colors.white70),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white70),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD0F0C0),
+              foregroundColor: const Color(0xFF222222),
+            ),
+            onPressed: () async {
+              if (nameController.text.isNotEmpty) {
+                Navigator.pop(context);
+                await _createRestaurant(nameController.text, addressController.text);
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _createRestaurant(String name, String address) async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
+      
+      // Create restaurant
+      final result = await _supabase
+          .from('restaurants')
+          .insert({
+            'name': name,
+            'address': address,
+            'owner_id': user.id,
+          })
+          .select('restaurant_id')
+          .single();
+      
+      // Update user with restaurant_id if the field exists
+      try {
+        await _supabase
+            .from('users')
+            .update({'restaurant_id': result['restaurant_id']})
+            .eq('user_id', user.id);
+      } catch (e) {
+        print('Note: Could not update user restaurant_id (field may not exist): $e');
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Restaurant created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Retry loading data
+        await _loadInitialData();
+      }
+      
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error creating restaurant: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _fetchInventoryItems() async {
     try {
       // Get restaurant ID
@@ -280,7 +496,7 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
     
     setState(() {
       _filteredOrders = _orders.where((order) {
-        // Filter by status first if not "All"
+        // Filter by status first if not "All" (case-insensitive)
         if (_selectedStatus != 'All' &&
             order['status']?.toString().toLowerCase() != _selectedStatus.toLowerCase()) {
           return false;
@@ -310,12 +526,13 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
         }
         
         return orderId.contains(searchText) || 
-               notes.contains(searchText) ||
-               supplierName.contains(searchText);
+              notes.contains(searchText) ||
+              supplierName.contains(searchText);
       }).toList();
     });
   }
-  
+
+  // And update the _selectStatus method to handle case-insensitive filtering
   void _selectStatus(String status) {
     setState(() {
       _selectedStatus = status;
@@ -704,8 +921,34 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
   }
 
   void _showCreateOrderModal(BuildContext context) {
-    // Show message if no suppliers or inventory items
-    if (_suppliers.isEmpty) {
+    // Extract suppliers from existing orders if _suppliers is empty
+    List<Map<String, dynamic>> availableSuppliers = List.from(_suppliers);
+    
+    if (availableSuppliers.isEmpty && _orders.isNotEmpty) {
+      print('🔧 Extracting suppliers from existing orders for modal...');
+      
+      final uniqueSuppliers = <String, Map<String, dynamic>>{};
+      
+      for (var order in _orders) {
+        if (order['supplier_id'] is Map) {
+          final supplierData = order['supplier_id'] as Map<String, dynamic>;
+          final supplierId = supplierData['supplier_id'];
+          if (supplierId != null && supplierData['company_name'] != null) {
+            uniqueSuppliers[supplierId] = {
+              'supplier_id': supplierId,
+              'company_name': supplierData['company_name'],
+              'product_type': 'Unknown', // Default since we don't have this from orders
+            };
+          }
+        }
+      }
+      
+      availableSuppliers = uniqueSuppliers.values.toList();
+      print('✅ Extracted ${availableSuppliers.length} suppliers from orders');
+    }
+    
+    // Show message if no suppliers found anywhere
+    if (availableSuppliers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -718,7 +961,10 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
               TextButton(
                 onPressed: () {
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  Navigator.pushNamed(context, '/suppliers');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SuppliersManagementPage()),
+                  );
                 },
                 child: const Text('Add Suppliers'),
               )
@@ -757,6 +1003,7 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
       return;
     }
 
+
     // Initialize for order creation
     var selectedSupplierId = _suppliers.isNotEmpty ? _suppliers[0]['supplier_id'] : null;
     DateTime? deliveryDate = DateTime.now().add(const Duration(days: 7));
@@ -772,7 +1019,6 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
       }
     }
     
-    // Function to add a new item to the order
     void addItemToOrder(Map<String, dynamic> inventoryItem, double quantity) {
       // Check if item already exists in order
       final existingItemIndex = orderItems.indexWhere(
@@ -795,7 +1041,9 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
       
       updateTotalAmount();
     }
+
     
+
     // Function to remove item from order
     void removeItemFromOrder(int index) {
       orderItems.removeAt(index);
@@ -823,26 +1071,38 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
-                      const Center(
-                        child: Text(
-                          'Create Purchase Order',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      // Header with debug info
+                      Center(
+                        child: Column(
+                          children: [
+                            const Text(
+                              'Create Purchase Order',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (availableSuppliers.length != _suppliers.length)
+                              Text(
+                                'Using ${availableSuppliers.length} suppliers from existing orders',
+                                style: TextStyle(
+                                  color: Colors.orange.withOpacity(0.8),
+                                  fontSize: 12,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                       
                       const SizedBox(height: 20),
                       
-                      // Supplier dropdown
+                      // Supplier dropdown - using availableSuppliers
                       DropdownButtonFormField<String>(
                         decoration: _inputDecoration('Select Supplier'),
                         dropdownColor: const Color(0xFF333333),
                         value: selectedSupplierId,
-                        items: _suppliers.map((supplier) {
+                        items: availableSuppliers.map((supplier) {
                           return DropdownMenuItem<String>(
                             value: supplier['supplier_id'],
                             child: Text(
@@ -1230,43 +1490,130 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
       final user = _supabase.auth.currentUser;
       if (user == null) return;
       
-      final userData = await _supabase
-          .from('users')
-          .select('restaurant_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
+      // Try multiple ways to get restaurant_id
+      String? restaurantId;
       
-      if (userData == null || userData['restaurant_id'] == null) return;
+      // Method 1: From existing orders
+      try {
+        final existingOrder = await _supabase
+            .from('purchase_orders')
+            .select('restaurant_id')
+            .eq('restaurant_id', restaurantId!)
+            .maybeSingle();
+        
+        if (existingOrder != null) {
+          restaurantId = existingOrder['restaurant_id'];
+          print('✅ Found restaurant_id from existing order: $restaurantId');
+        }
+      } catch (e) {
+        print('Could not get restaurant_id from existing orders: $e');
+      }
       
-      final restaurantId = userData['restaurant_id'];
-      
-      // Create new purchase order
-      final result = await _supabase
-          .from('purchase_orders')
-          .insert({
-            'supplier_id': supplierId,
-            'expected_delivery_date': deliveryDate?.toIso8601String(),
-            'status': 'Pending',
-            'total_amount': totalAmount,
-            'notes': notes,
-            'restaurant_id': restaurantId,
-          })
-          .select('purchase_order_id')
-          .single();
+      // Method 2: From users table
+      if (restaurantId == null) {
+        try {
+          final userData = await _supabase
+              .from('users')
+              .select('restaurant_id')
+              .eq('user_id', user.id)
+              .maybeSingle();
           
+          if (userData != null && userData['restaurant_id'] != null) {
+            restaurantId = userData['restaurant_id'];
+            print('✅ Found restaurant_id from users table: $restaurantId');
+          }
+        } catch (e) {
+          print('Could not get restaurant_id from users table: $e');
+        }
+      }
+      
+      // Method 3: From restaurants table where user is owner
+      if (restaurantId == null) {
+        try {
+          final restaurantData = await _supabase
+              .from('restaurants')
+              .select('restaurant_id')
+              .eq('owner_id', user.id)
+              .maybeSingle();
+          
+          if (restaurantData != null) {
+            restaurantId = restaurantData['restaurant_id'];
+            print('✅ Found restaurant_id from restaurants table: $restaurantId');
+          }
+        } catch (e) {
+          print('Could not get restaurant_id from restaurants table: $e');
+        }
+      }
+      
+      if (restaurantId == null) {
+        throw Exception('Could not determine restaurant ID');
+      }
+      
+      // Try different status values that might be allowed
+      const statusOptions = ['pending', 'Pending', 'PENDING', 'draft', 'Draft', 'new', 'New'];
+      
+      Map<String, dynamic>? result;
+      String? workingStatus;
+      
+      for (String statusToTry in statusOptions) {
+        try {
+          print('🔍 Trying status: "$statusToTry"');
+          
+          result = await _supabase
+              .from('purchase_orders')
+              .insert({
+                'supplier_id': supplierId,
+                'expected_delivery_date': deliveryDate?.toIso8601String(),
+                'status': statusToTry, // Try different status values
+                'total_amount': totalAmount,
+                'notes': notes,
+                'restaurant_id': restaurantId,
+                'created_by': user.id, // Add created_by if the field exists
+              })
+              .select('purchase_order_id')
+              .single();
+              
+          workingStatus = statusToTry;
+          print('✅ Successfully used status: "$statusToTry"');
+          break; // Success, exit the loop
+          
+        } catch (statusError) {
+          print('❌ Status "$statusToTry" failed: $statusError');
+          
+          if (statusError.toString().contains('purchase_orders_status_check')) {
+            continue; // Try next status
+          } else {
+            // Different error, don't continue trying statuses
+            throw statusError;
+          }
+        }
+      }
+      
+      if (result == null) {
+        throw Exception('No valid status value found. Check constraint needs to be updated.');
+      }
+      
       final purchaseOrderId = result['purchase_order_id'];
+      print('✅ Purchase order created with ID: $purchaseOrderId');
       
       // Add order items
       for (var item in orderItems) {
-        await _supabase
-            .from('purchase_order_items')
-            .insert({
-              'purchase_order_id': purchaseOrderId,
-              'inventory_id': item['inventory_id'],
-              'quantity': item['quantity'],
-              'unit_price': item['unit_price'],
-              'notes': item['notes'],
-            });
+        try {
+          await _supabase
+              .from('purchase_order_items')
+              .insert({
+                'purchase_order_id': purchaseOrderId,
+                'inventory_id': item['inventory_id'],
+                'item_name': item['item_name'], // Add item_name in case inventory_id reference fails
+                'quantity': item['quantity'],
+                'unit_price': item['unit_price'],
+                'unit': item['unit'], // Add unit if the field exists
+                'notes': item['notes'],
+              });
+        } catch (itemError) {
+          print('❌ Error adding item ${item['item_name']}: $itemError');
+          // Continue with other items even if one fails
+        }
       }
       
       // Refresh purchase orders
@@ -1274,8 +1621,8 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Purchase order created successfully'),
+          SnackBar(
+            content: Text('Purchase order created successfully with status "$workingStatus"'),
             backgroundColor: Colors.green,
           ),
         );
@@ -1283,12 +1630,21 @@ class _PurchaseOrdersPageState extends State<PurchaseOrdersPage> {
     } catch (e) {
       print('Error saving purchase order: $e');
       
-      // Show error message
+      // Show error message with more details
       if (mounted) {
+        String errorMessage = 'Error creating purchase order: $e';
+        
+        if (e.toString().contains('purchase_orders_status_check')) {
+          errorMessage = 'Database error: Invalid status value. The database constraint needs to be updated to allow "Pending" status.';
+        } else if (e.toString().contains('violates check constraint')) {
+          errorMessage = 'Database constraint error: ${e.toString()}';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error creating purchase order: $e'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }

@@ -119,9 +119,9 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'reserved':
-        return const Color(0xFF442222);
-      case 'occupied':
         return const Color(0xFF332F22);
+      case 'occupied':
+        return const Color(0xFF442222);
       default:
         return const Color(0xFF1A1A1A);
     }
@@ -129,12 +129,12 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
 
   Color _getStatusTextColor(String status) {
     switch (status) {
-      case 'reserved':
+      case const Color(0xFF42A5F5):
         return Colors.red;
       case 'occupied':
         return const Color(0xFFFFA726);
       default:
-        return const Color(0xFFD0F0C0);
+        return const Color(0xFF66BB6A);
     }
   }
 
@@ -510,10 +510,10 @@ class _AddEditTableScreenState extends State<AddEditTableScreen> {
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
-                        controller: _tableNumberController,
+                        controller: _seatingCapacityController,
                         style: const TextStyle(color: Color(0xFFEEEFEF)),
                         decoration: InputDecoration(
-                          labelText: 'Table Number',
+                          labelText: 'Seating capacity',
                           labelStyle: const TextStyle(color: Color(0xFFD0F0C0)),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),

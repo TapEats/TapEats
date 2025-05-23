@@ -3,6 +3,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:tapeats/presentation/screens/restaurant_side/inventory_management/purchase_orders_page.dart';
 import 'package:tapeats/presentation/state_management/navbar_state.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/footer_widget.dart';
@@ -90,7 +91,10 @@ class _ReceivingPageState extends State<ReceivingPage> {
               action: SnackBarAction(
                 label: 'Go to Purchase Orders',
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/purchase_orders');
+                  Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PurchaseOrdersPage()),
+                );
                 },
               ),
               backgroundColor: Colors.orange,
@@ -143,7 +147,7 @@ class _ReceivingPageState extends State<ReceivingPage> {
             )
           ''')
           .eq('restaurant_id', restaurantId)
-          .eq('status', 'approved')
+          .eq('status', 'pending')
           .order('expected_delivery_date', ascending: true);
       
       // Fetch items for each order
@@ -292,7 +296,10 @@ class _ReceivingPageState extends State<ReceivingPage> {
           const SizedBox(height: 8),
           TextButton.icon(
             onPressed: () {
-              Navigator.pushReplacementNamed(context, '/purchase_orders');
+                  Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PurchaseOrdersPage()),
+                );
             },
             icon: const Icon(Iconsax.arrow_right_3, color: Color(0xFFD0F0C0)),
             label: const Text(
@@ -1302,7 +1309,7 @@ class _ReceivingPageState extends State<ReceivingPage> {
       await _supabase
           .from('purchase_orders')
           .update({
-            'status': 'Received',
+            'status': 'received',
             'notes': orderNotes.isNotEmpty 
                 ? "${order['notes'] ?? ''}\n\nReceiving notes: $orderNotes" 
                 : order['notes'],
@@ -1346,7 +1353,7 @@ class _ReceivingPageState extends State<ReceivingPage> {
                 'inventory_id': inventoryId,
                 'transaction_type': 'receiving',
                 'quantity': receivedQty,
-                'notes': receivedNotes[inventoryId] ?? 'Received from order ${order['purchase_order_id']}',
+                'notes': receivedNotes[inventoryId] ?? 'received from order ${order['purchase_order_id']}',
                 'user_id': user.id,
                 'restaurant_id': restaurantId,
                 'reference_id': orderId,

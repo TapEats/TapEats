@@ -83,7 +83,7 @@ class _SuppliersManagementPageState extends State<SuppliersManagementPage> {
       
       // Fetch suppliers
       final suppliersResult = await _supabase
-          .from('supplier_id')
+          .from('suppliers')
           .select('*')
           .eq('restaurant_id', restaurantId);
           
@@ -656,7 +656,7 @@ class _SuppliersManagementPageState extends State<SuppliersManagementPage> {
       if (supplierId != null) {
         // Update existing supplier
         await _supabase
-            .from('supplier_id')
+            .from('suppliers')
             .update({
               'name': name,
               'company_name': companyName,
@@ -670,7 +670,7 @@ class _SuppliersManagementPageState extends State<SuppliersManagementPage> {
       } else {
         // Create new supplier
         await _supabase
-            .from('supplier_id')
+            .from('suppliers')
             .insert({
               'name': name,
               'company_name': companyName,

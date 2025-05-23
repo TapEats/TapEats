@@ -50,7 +50,8 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           .eq('user_id', currentUserId as Object)
           .single();
 
-      if (userData['role'] == 'restaurant_owner') {
+      if (['restaurant_owner', 'restaurant_waiter', 'restaurant_manager']
+          .contains(userData['role'])) {
         restaurantId = userData['restaurant_id'];
         if (restaurantId != null) {
           await _fetchRestaurantMenu(restaurantId!);
