@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
 import 'package:tapeats/presentation/screens/user_side/notification_page.dart';
+import 'package:tapeats/presentation/state_management/slider_state.dart';
 import 'package:tapeats/presentation/widgets/add_button.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/minus_button.dart';
@@ -13,6 +14,7 @@ import 'package:tapeats/presentation/widgets/search_bar.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/services/notification_service.dart';
+import 'package:tapeats/main.dart' show routeObserver;
 
 class MenuPage extends StatefulWidget {
   const MenuPage({super.key});
@@ -21,7 +23,7 @@ class MenuPage extends StatefulWidget {
   State<MenuPage> createState() => _MenuPageState();
 }
 
-class _MenuPageState extends State<MenuPage> with AutomaticKeepAliveClientMixin {
+class _MenuPageState extends State<MenuPage> with AutomaticKeepAliveClientMixin, RouteAware {
   final SupabaseClient supabase = Supabase.instance.client;
   Map<String, int> cartItems = {}; // This will store item names and their quantities
   int totalItems = 0; // Total number of items in the cart
@@ -44,9 +46,23 @@ class _MenuPageState extends State<MenuPage> with AutomaticKeepAliveClientMixin 
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
+  }
+
+  @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    super.didPopNext();
+    // Reset both slider and cart states when returning to this page
+    Provider.of<SliderState>(context, listen: false).resetAllSliders();
   }
 
   Future<void> _fetchMenuData() async {

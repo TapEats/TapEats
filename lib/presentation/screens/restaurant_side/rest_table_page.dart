@@ -4,10 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 
 class TableManagementScreen extends StatefulWidget {
-
-  const TableManagementScreen({
-    super.key,
-  });
+  const TableManagementScreen({super.key});
 
   @override
   State<TableManagementScreen> createState() => _TableManagementScreenState();
@@ -19,11 +16,19 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
   bool isLoading = true;
   String? restaurantId;
   String? currentUserId;
+  late final RealtimeChannel _tableChannel;
 
   @override
   void initState() {
     super.initState();
+    _tableChannel = supabase.channel('table_changes');
     _fetchCurrentUserAndTables();
+  }
+
+  @override
+  void dispose() {
+    _tableChannel.unsubscribe();
+    super.dispose();
   }
 
   Future<void> _fetchCurrentUserAndTables() async {
@@ -42,10 +47,12 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
           .eq('user_id', currentUserId as Object)
           .single();
 
-      if (userData['role'] == 'restaurant_owner') {
+      if (['restaurant_owner', 'restaurant_waiter', 'restaurant_manager']
+          .contains(userData['role'])) {
         restaurantId = userData['restaurant_id'];
         if (restaurantId != null) {
           await _fetchRestaurantTables(restaurantId!);
+          _setupRealtimeSubscription();
         }
       }
 
@@ -76,6 +83,102 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error fetching tables: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _setupRealtimeSubscription() {
+    _tableChannel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'restaurant_tables',
+          callback: (payload) => _handleTableUpdate(payload),
+        )
+        .subscribe();
+  }
+
+  void _handleTableUpdate(PostgresChangePayload payload) {
+    if (payload.oldRecord['restaurant_id'] != restaurantId) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _fetchRestaurantTables(restaurantId!);
+      }
+    });
+  }
+
+  String _getTableStatus(Map<String, dynamic> table) {
+    if (table['is_prebooked'] == true) return 'reserved';
+    if (table['is_reserved'] == true) return 'occupied';
+    return 'available';
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'reserved':
+        return const Color(0xFF442222);
+      case 'occupied':
+        return const Color(0xFF332F22);
+      default:
+        return const Color(0xFF1A1A1A);
+    }
+  }
+
+  Color _getStatusTextColor(String status) {
+    switch (status) {
+      case 'reserved':
+        return Colors.red;
+      case 'occupied':
+        return const Color(0xFFFFA726);
+      default:
+        return const Color(0xFFD0F0C0);
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'reserved':
+        return Iconsax.reserve;
+      case 'occupied':
+        return Iconsax.user;
+      default:
+        return Iconsax.tick_circle;
+    }
+  }
+
+  Future<void> _toggleTableStatus(int index) async {
+    final table = tables[index];
+    final currentStatus = _getTableStatus(table);
+    Map<String, dynamic> updates = {};
+
+    switch (currentStatus) {
+      case 'available':
+        updates = {'is_reserved': true, 'is_prebooked': false};
+        break;
+      case 'occupied':
+        updates = {'is_reserved': false, 'is_prebooked': true};
+        break;
+      case 'reserved':
+        updates = {'is_reserved': false, 'is_prebooked': false};
+        break;
+    }
+
+    try {
+      await supabase
+          .from('restaurant_tables')
+          .update(updates)
+          .eq('table_id', table['table_id']);
+
+      setState(() {
+        tables[index].addAll(updates);
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating status: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -161,28 +264,6 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
     }
   }
 
-  Future<void> _toggleReservationStatus(int index) async {
-    final tableId = tables[index]['table_id'];
-    final currentStatus = tables[index]['is_reserved'];
-
-    try {
-      await supabase
-          .from('restaurant_tables')
-          .update({'is_reserved': !currentStatus}).eq('table_id', tableId);
-
-      setState(() {
-        tables[index]['is_reserved'] = !currentStatus;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error updating reservation status: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -234,13 +315,12 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                               itemCount: tables.length,
                               itemBuilder: (context, index) {
                                 final table = tables[index];
+                                final status = _getTableStatus(table);
                                 return GestureDetector(
                                   onTap: () => _editTable(index),
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: table['is_reserved']
-                                          ? const Color(0xFF442222)
-                                          : const Color(0xFF1A1A1A),
+                                      color: _getStatusColor(status),
                                       borderRadius: BorderRadius.circular(15),
                                       boxShadow: [
                                         BoxShadow(
@@ -250,9 +330,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                                         ),
                                       ],
                                       border: Border.all(
-                                        color: table['is_reserved']
-                                            ? Colors.red
-                                            : const Color(0xFFD0F0C0),
+                                        color: _getStatusTextColor(status),
                                         width: 2,
                                       ),
                                     ),
@@ -281,13 +359,10 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                                               ),
                                               const SizedBox(height: 8),
                                               Text(
-                                                table['is_reserved']
-                                                    ? 'RESERVED'
-                                                    : 'AVAILABLE',
+                                                status.toUpperCase(),
                                                 style: TextStyle(
-                                                  color: table['is_reserved']
-                                                      ? Colors.red
-                                                      : const Color(0xFFD0F0C0),
+                                                  color: _getStatusTextColor(
+                                                      status),
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
@@ -299,15 +374,12 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                                           right: 8,
                                           child: IconButton(
                                             icon: Icon(
-                                              table['is_reserved']
-                                                  ? Iconsax.reserve
-                                                  : Iconsax.tick_circle,
-                                              color: table['is_reserved']
-                                                  ? Colors.red
-                                                  : const Color(0xFFD0F0C0),
+                                              _getStatusIcon(status),
+                                              color:
+                                                  _getStatusTextColor(status),
                                             ),
                                             onPressed: () =>
-                                                _toggleReservationStatus(index),
+                                                _toggleTableStatus(index),
                                           ),
                                         ),
                                         Positioned(
@@ -356,7 +428,7 @@ class _AddEditTableScreenState extends State<AddEditTableScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _tableNumberController;
   late TextEditingController _seatingCapacityController;
-  late bool _isReserved;
+  late String _selectedStatus;
 
   @override
   void initState() {
@@ -365,14 +437,25 @@ class _AddEditTableScreenState extends State<AddEditTableScreen> {
         text: widget.table?['table_number']?.toString() ?? '');
     _seatingCapacityController = TextEditingController(
         text: widget.table?['seating_capacity']?.toString() ?? '');
-    _isReserved = widget.table?['is_reserved'] ?? false;
+    _selectedStatus = _getInitialStatus();
   }
 
-  @override
-  void dispose() {
-    _tableNumberController.dispose();
-    _seatingCapacityController.dispose();
-    super.dispose();
+  String _getInitialStatus() {
+    if (widget.table == null) return 'available';
+    if (widget.table!['is_prebooked'] == true) return 'reserved';
+    if (widget.table!['is_reserved'] == true) return 'occupied';
+    return 'available';
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'reserved':
+        return Colors.red;
+      case 'occupied':
+        return const Color(0xFFFFA726);
+      default:
+        return const Color(0xFFD0F0C0);
+    }
   }
 
   @override
@@ -427,10 +510,10 @@ class _AddEditTableScreenState extends State<AddEditTableScreen> {
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
-                        controller: _seatingCapacityController,
+                        controller: _tableNumberController,
                         style: const TextStyle(color: Color(0xFFEEEFEF)),
                         decoration: InputDecoration(
-                          labelText: 'Seating Capacity',
+                          labelText: 'Table Number',
                           labelStyle: const TextStyle(color: Color(0xFFD0F0C0)),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -453,18 +536,42 @@ class _AddEditTableScreenState extends State<AddEditTableScreen> {
                             value?.isEmpty ?? true ? 'Required field' : null,
                       ),
                       const SizedBox(height: 16),
-                      SwitchListTile(
-                        title: Text(
-                          'Reserved Status',
-                          style: TextStyle(color: Color(0xFFEEEFEF)),
+                      DropdownButtonFormField<String>(
+                        value: _selectedStatus,
+                        dropdownColor: const Color(0xFF222222),
+                        style: const TextStyle(color: Color(0xFFEEEFEF)),
+                        items: ['available', 'occupied', 'reserved']
+                            .map((status) => DropdownMenuItem(
+                                  value: status,
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 10,
+                                        height: 10,
+                                        decoration: BoxDecoration(
+                                          color: _getStatusColor(status),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        status.toUpperCase(),
+                                        style: TextStyle(
+                                            color: _getStatusColor(status)),
+                                      ),
+                                    ],
+                                  ),
+                                ))
+                            .toList(),
+                        onChanged: (value) =>
+                            setState(() => _selectedStatus = value!),
+                        decoration: InputDecoration(
+                          labelText: 'Table Status',
+                          labelStyle: const TextStyle(color: Color(0xFFD0F0C0)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                        activeColor: const Color(0xFFD0F0C0),
-                        value: _isReserved,
-                        onChanged: (value) {
-                          setState(() {
-                            _isReserved = value;
-                          });
-                        },
                       ),
                     ],
                   ),
@@ -484,7 +591,8 @@ class _AddEditTableScreenState extends State<AddEditTableScreen> {
         'restaurant_id': widget.restaurantId,
         'table_number': int.parse(_tableNumberController.text),
         'seating_capacity': int.parse(_seatingCapacityController.text),
-        'is_reserved': _isReserved,
+        'is_reserved': _selectedStatus == 'occupied',
+        'is_prebooked': _selectedStatus == 'reserved',
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
       };
