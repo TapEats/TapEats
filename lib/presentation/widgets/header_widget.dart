@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// Import Iconsax icons
 
 class HeaderWidget extends StatelessWidget {
   final IconData leftIcon;
@@ -9,6 +8,7 @@ class HeaderWidget extends StatelessWidget {
   final VoidCallback? onHeadingButtonPressed; // Made optional
   final IconData rightIcon;
   final VoidCallback onRightButtonPressed;
+  final int notificationCount; // New parameter for notification badge count
 
   const HeaderWidget({
     super.key,
@@ -19,6 +19,7 @@ class HeaderWidget extends StatelessWidget {
     this.onHeadingButtonPressed, // Optional heading button press callback
     required this.rightIcon,
     required this.onRightButtonPressed,
+    this.notificationCount = 0, // Default to 0
   });
 
   @override
@@ -34,7 +35,7 @@ class HeaderWidget extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Left Icon (e.g., user icon)
+          // Left Icon (notification icon)
           GestureDetector(
             onTap: onLeftButtonPressed,
             child: Container(
@@ -44,10 +45,41 @@ class HeaderWidget extends StatelessWidget {
                 color: const Color(0xFF222222),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                leftIcon,
-                color: const Color(0xFFD0F0C0),
-                size: iconSize,
+              child: Stack(
+                children: [
+                  Center(
+                    child: Icon(
+                      leftIcon,
+                      color: const Color(0xFFD0F0C0),
+                      size: iconSize,
+                    ),
+                  ),
+                  if (notificationCount > 0)
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          notificationCount > 9 ? '9+' : notificationCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),

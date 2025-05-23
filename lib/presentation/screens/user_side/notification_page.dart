@@ -34,8 +34,7 @@ class _NotificationPageState extends State<NotificationPage> {
     try {
       // In a real app, you would fetch notifications from your database
       // For now, we'll create sample notifications
-      await Future.delayed(
-          const Duration(milliseconds: 500)); // Simulate network delay
+      await Future.delayed(const Duration(milliseconds: 500)); // Simulate network delay
 
       setState(() {
         notifications = [
@@ -59,8 +58,7 @@ class _NotificationPageState extends State<NotificationPage> {
           NotificationItem(
             id: '3',
             title: 'Order accepted by restaurant',
-            message:
-                'Your order #12346 has been accepted and is being prepared.',
+            message: 'Your order #12346 has been accepted and is being prepared.',
             timestamp: DateTime.now().subtract(const Duration(hours: 5)),
             type: NotificationType.orderUpdate,
             isRead: true,
@@ -69,8 +67,7 @@ class _NotificationPageState extends State<NotificationPage> {
           NotificationItem(
             id: '4',
             title: 'Rate your last order',
-            message:
-                'How was your experience with order #12347? Tap to rate and review.',
+            message: 'How was your experience with order #12347? Tap to rate and review.',
             timestamp: DateTime.now().subtract(const Duration(days: 1)),
             type: NotificationType.feedback,
             isRead: true,
@@ -79,17 +76,15 @@ class _NotificationPageState extends State<NotificationPage> {
           NotificationItem(
             id: '5',
             title: 'New restaurant added!',
-            message:
-                'Check out the latest addition to TapEats - Spice Fusion is now available for orders.',
+            message: 'Check out the latest addition to TapEats - Spice Fusion is now available for orders.',
             timestamp: DateTime.now().subtract(const Duration(days: 2)),
             type: NotificationType.newFeature,
             isRead: true,
           ),
         ];
-
+        
         // Calculate unread count
-        unreadCount =
-            notifications.where((notification) => !notification.isRead).length;
+        unreadCount = notifications.where((notification) => !notification.isRead).length;
       });
     } catch (e) {
       // Handle errors
@@ -110,7 +105,7 @@ class _NotificationPageState extends State<NotificationPage> {
       }
       unreadCount = 0;
     });
-
+    
     // In a real app, you would update this in your database
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('All notifications marked as read')),
@@ -123,14 +118,14 @@ class _NotificationPageState extends State<NotificationPage> {
         notification.isRead = true;
         unreadCount--;
       });
-
+      
       // In a real app, you would update this in your database
     }
   }
 
   void _handleNotificationTap(NotificationItem notification) {
     _markAsRead(notification);
-
+    
     // Handle different notification types
     switch (notification.type) {
       case NotificationType.orderUpdate:
@@ -148,15 +143,14 @@ class _NotificationPageState extends State<NotificationPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  OrderHistoryPage(cartItems: {}, totalItems: 0),
+              builder: (context) => OrderHistoryPage(cartItems: {}, totalItems: 0),
             ),
           );
         }
         break;
       case NotificationType.promotion:
       case NotificationType.newFeature:
-        // Show details in a dialog
+      // Show details in a dialog
         _showNotificationDetails(notification);
         break;
     }
@@ -232,7 +226,7 @@ class _NotificationPageState extends State<NotificationPage> {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-
+    
     if (difference.inMinutes < 1) {
       return 'Just now';
     } else if (difference.inMinutes < 60) {
@@ -265,15 +259,15 @@ class _NotificationPageState extends State<NotificationPage> {
             _buildNotificationHeader(),
             const SizedBox(height: 15),
             Expanded(
-              child: isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFFD0F0C0),
-                      ),
-                    )
-                  : notifications.isEmpty
-                      ? _buildEmptyState()
-                      : _buildNotificationList(),
+              child: isLoading 
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFFD0F0C0),
+                    ),
+                  )
+                : notifications.isEmpty
+                    ? _buildEmptyState()
+                    : _buildNotificationList(),
             ),
           ],
         ),
@@ -382,12 +376,10 @@ class _NotificationPageState extends State<NotificationPage> {
         margin: const EdgeInsets.only(bottom: 15),
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: notification.isRead
-              ? const Color(0xFF1A1A1A)
-              : const Color(0xFF222222),
+          color: notification.isRead ? const Color(0xFF1A1A1A) : const Color(0xFF222222),
           borderRadius: BorderRadius.circular(15),
-          border: notification.isRead
-              ? null
+          border: notification.isRead 
+              ? null 
               : Border.all(color: const Color(0xFFD0F0C0), width: 1),
         ),
         child: Row(
@@ -420,9 +412,7 @@ class _NotificationPageState extends State<NotificationPage> {
                             color: const Color(0xFFEEEFEF),
                             fontFamily: 'Helvetica Neue',
                             fontSize: 16,
-                            fontWeight: notification.isRead
-                                ? FontWeight.normal
-                                : FontWeight.bold,
+                            fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -479,7 +469,7 @@ class _NotificationPageState extends State<NotificationPage> {
         return Iconsax.star;
       case NotificationType.newFeature:
         return Iconsax.info_circle;
-    }
+      }
   }
 }
 

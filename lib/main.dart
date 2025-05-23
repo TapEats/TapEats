@@ -6,6 +6,7 @@ import 'package:tapeats/presentation/screens/login_page.dart';
 import 'package:tapeats/presentation/state_management/cart_state.dart';
 import 'package:tapeats/presentation/state_management/navbar_state.dart';
 import 'package:tapeats/presentation/state_management/slider_state.dart';
+import 'package:tapeats/services/notification_service.dart';
 import 'package:tapeats/utils/env_loader.dart';
 import 'package:tapeats/presentation/screens/splash_screen.dart';
 import 'package:tapeats/presentation/screens/user_side/main_screen.dart';
@@ -32,12 +33,16 @@ Future<void> main() async {
     anonKey: supabaseAnonKey,
   );
 
+  final notificationService = NotificationService();
+  notificationService.initialize();
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartState()),
         ChangeNotifierProvider(create: (_) => SliderState()),
         ChangeNotifierProvider(create: (_) => NavbarState()),
+        ChangeNotifierProvider.value(value: notificationService),
       ],
       child: const MyApp(),
     ),
@@ -49,31 +54,33 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'TapEats',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.black,
+    return Center(
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'TapEats',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          scaffoldBackgroundColor: Colors.black,
+        ),
+        navigatorObservers: [routeObserver],
+        initialRoute: '/',
+        routes: {
+          '/': (context) => const SplashScreen(selectedIndex: 0),
+          '/auth/login': (context) => const LoginPage(),
+          '/home': (context) => MainScreen(),
+        },
+        // Handle undefined routes
+        onUnknownRoute: (settings) {
+          return MaterialPageRoute(
+            builder: (context) => const SplashScreen(selectedIndex: 0),
+          );
+        },
+        // Optional: Add onGenerateRoute for dynamic routes if needed
+        onGenerateRoute: (settings) {
+          // Handle any dynamic routes here
+          return null;
+        },
       ),
-      navigatorObservers: [routeObserver],
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreen(selectedIndex: 0),
-        '/auth/login': (context) => const LoginPage(),
-        '/home': (context) => MainScreen(),
-      },
-      // Handle undefined routes
-      onUnknownRoute: (settings) {
-        return MaterialPageRoute(
-          builder: (context) => const SplashScreen(selectedIndex: 0),
-        );
-      },
-      // Optional: Add onGenerateRoute for dynamic routes if needed
-      onGenerateRoute: (settings) {
-        // Handle any dynamic routes here
-        return null;
-      },
     );
   }
 }

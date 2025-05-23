@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
+import 'package:tapeats/presentation/screens/user_side/notification_page.dart';
 import 'package:tapeats/presentation/widgets/add_button.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/minus_button.dart';
 import 'package:tapeats/presentation/widgets/plus_button.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
+import 'package:tapeats/services/notification_service.dart';
 
 class FavouritesPage extends StatefulWidget {
+
   const FavouritesPage({super.key});
 
   @override
@@ -86,8 +90,16 @@ class _FavouritesPageState extends State<FavouritesPage> {
     );
   }
 
+  void _navigateToNotifications() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const NotificationPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final notificationService = Provider.of<NotificationService>(context);
     return Scaffold(
       backgroundColor: const Color(0xFF151611),
       body: SafeArea(
@@ -96,12 +108,13 @@ class _FavouritesPageState extends State<FavouritesPage> {
           children: [
             // Header Widget
             HeaderWidget(
-              leftIcon: Iconsax.arrow_left_1,
-              onLeftButtonPressed: () => Navigator.pop(context),
+              leftIcon: Iconsax.notification,
+              onLeftButtonPressed: _navigateToNotifications,
               headingText: 'Favourites',
               headingIcon: Iconsax.heart,
               rightIcon: Iconsax.menu_1,
               onRightButtonPressed: _openSideMenu,
+              notificationCount: notificationService.unreadCount,
             ),
             const SizedBox(height: 20),
 
@@ -116,8 +129,7 @@ class _FavouritesPageState extends State<FavouritesPage> {
                 child: SliderButton(
                   labelText: 'Cart',
                   subText: '$totalItems items',
-                  onSlideComplete: _onSlideToCheckout,
-                  pageId: 'favourite_cart',
+                  onSlideComplete: _onSlideToCheckout, pageId: 'favourite_cart',
                 ),
               ),
             const SizedBox(height: 20),

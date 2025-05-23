@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/widgets/custom_footer_five_button_widget.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
+import 'package:tapeats/services/food_image_service.dart'; // Add this import
 
 class MenuManagementScreen extends StatefulWidget {
   final int selectedIndex;
@@ -22,6 +25,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   bool isLoading = true;
   String? restaurantId;
   String? currentUserId;
+  File? _selectedFoodImage;
+  String? _currentFoodImageUrl;
+  bool _isImageLoading = false;
+  final _foodImageService = FoodImageService();
+  bool isEditing = false;
 
   @override
   void initState() {
@@ -62,6 +70,30 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       );
       setState(() => isLoading = false);
     }
+  }
+
+  Future<void> _handleImageUpload() async {
+    if (!isEditing) return;
+
+    setState(() => _isImageLoading = true);
+    try {
+      final imageFile = await _foodImageService.pickImage();
+      if (imageFile == null) return;
+
+      setState(() {
+        _selectedFoodImage = imageFile;
+        _currentFoodImageUrl = null;
+      });
+    } finally {
+      setState(() => _isImageLoading = false);
+    }
+  }
+
+  void _removeImage() {
+    setState(() {
+      _selectedFoodImage = null;
+      _currentFoodImageUrl = null;
+    });
   }
 
   Future<void> _fetchRestaurantMenu(String restaurantId) async {
@@ -224,6 +256,45 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
+                                        // New Image Section
+                                        if (item['image_url'] != null &&
+                                            item['image_url'].isNotEmpty)
+                                          ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            child: Image.network(
+                                              item['image_url'],
+                                              height: 150,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                              loadingBuilder: (context, child,
+                                                  loadingProgress) {
+                                                // Fixed position
+                                                if (loadingProgress == null)
+                                                  return child;
+                                                return Container(
+                                                  height: 150,
+                                                  color: Colors.black26,
+                                                  child: const Center(
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                            color: Color(
+                                                                0xFFD0F0C0)),
+                                                  ),
+                                                );
+                                              },
+                                              errorBuilder: (context, error,
+                                                      stackTrace) =>
+                                                  Container(
+                                                height: 150,
+                                                color: Colors.black26,
+                                                child: const Icon(
+                                                    Icons.fastfood,
+                                                    color: Color(0xFFD0F0C0)),
+                                              ),
+                                            ),
+                                          ),
+                                        const SizedBox(height: 12),
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
@@ -357,13 +428,18 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
   late TextEditingController _categoryController;
   late TextEditingController _timeController;
   late TextEditingController _ratingController;
-  late TextEditingController _imageController;
   late TextEditingController _ingredientsController;
   late TextEditingController _descriptionController;
+
+  File? _selectedFoodImage;
+  String? _currentFoodImageUrl;
+  bool _isImageLoading = false;
+  final _foodImageService = FoodImageService();
 
   @override
   void initState() {
     super.initState();
+    _currentFoodImageUrl = widget.item?['image_url'];
     _nameController = TextEditingController(text: widget.item?['name'] ?? '');
     _priceController =
         TextEditingController(text: widget.item?['price']?.toString() ?? '');
@@ -373,8 +449,6 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
         TextEditingController(text: widget.item?['cooking_time'] ?? '');
     _ratingController = TextEditingController(
         text: widget.item?['rating']?.toString() ?? '4.5');
-    _imageController =
-        TextEditingController(text: widget.item?['image_url'] ?? '');
     _ingredientsController =
         TextEditingController(text: widget.item?['ingredients'] ?? '');
     _descriptionController =
@@ -388,10 +462,30 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
     _categoryController.dispose();
     _timeController.dispose();
     _ratingController.dispose();
-    _imageController.dispose();
     _ingredientsController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleImageUpload() async {
+    setState(() => _isImageLoading = true);
+    try {
+      final imageFile = await _foodImageService.pickImage();
+      if (imageFile == null) return;
+      setState(() {
+        _selectedFoodImage = imageFile;
+        _currentFoodImageUrl = null;
+      });
+    } finally {
+      setState(() => _isImageLoading = false);
+    }
+  }
+
+  void _removeImage() {
+    setState(() {
+      _selectedFoodImage = null;
+      _currentFoodImageUrl = null;
+    });
   }
 
   @override
@@ -419,6 +513,91 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                   key: _formKey,
                   child: Column(
                     children: [
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: 60,
+                            backgroundColor:
+                                const Color(0xFFD0F0C0).withOpacity(0.1),
+                            child: ClipOval(
+                              child: SizedBox(
+                                width: 120,
+                                height: 120,
+                                child: _isImageLoading
+                                    ? const Center(
+                                        child: CircularProgressIndicator(
+                                            color: Color(0xFFD0F0C0)))
+                                    : _selectedFoodImage != null
+                                        ? Image.file(_selectedFoodImage!,
+                                            fit: BoxFit.cover)
+                                        : _currentFoodImageUrl != null
+                                            ? Image.network(
+                                                _currentFoodImageUrl!,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error,
+                                                        stackTrace) =>
+                                                    const Icon(Icons.fastfood,
+                                                        size: 40,
+                                                        color:
+                                                            Color(0xFFD0F0C0)),
+                                                loadingBuilder: (context, child,
+                                                    loadingProgress) {
+                                                  if (loadingProgress == null)
+                                                    return child;
+                                                  return const Center(
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                              color: Color(
+                                                                  0xFFD0F0C0)));
+                                                },
+                                              )
+                                            : const Icon(Icons.fastfood,
+                                                size: 40,
+                                                color: Color(0xFFD0F0C0)),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Row(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.6),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    icon: const Icon(Iconsax.gallery_edit,
+                                        size: 20),
+                                    color: const Color(0xFFD0F0C0),
+                                    onPressed: _handleImageUpload,
+                                  ),
+                                ),
+                                if (_selectedFoodImage != null ||
+                                    _currentFoodImageUrl != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 8.0),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.6),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: IconButton(
+                                        icon:
+                                            const Icon(Iconsax.trash, size: 20),
+                                        color: Colors.red,
+                                        onPressed: _removeImage,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
                       TextFormField(
                         controller: _nameController,
                         style: const TextStyle(color: Color(0xFFEEEFEF)),
@@ -552,30 +731,6 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
-                        controller: _imageController,
-                        style: const TextStyle(color: Color(0xFFEEEFEF)),
-                        decoration: InputDecoration(
-                          labelText: 'Image URL',
-                          labelStyle: const TextStyle(color: Color(0xFFD0F0C0)),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Color(0xFFD0F0C0)),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Color(0xFFD0F0C0)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Color(0xFFD0F0C0)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
                         controller: _ingredientsController,
                         style: const TextStyle(color: Color(0xFFEEEFEF)),
                         decoration: InputDecoration(
@@ -632,30 +787,42 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: CustomFiveFooter(
-        selectedIndex: 1, // Assuming this is the menu management tab index
-      ),
+      bottomNavigationBar: CustomFiveFooter(selectedIndex: 1),
     );
   }
 
-  void _saveItem() {
+  void _saveItem() async {
     if (_formKey.currentState?.validate() ?? false) {
-      final newItem = {
-        if (widget.item != null) 'menu_id': widget.item!['menu_id'],
-        'restaurant_id': widget.restaurantId,
-        'name': _nameController.text,
-        'price': double.parse(_priceController.text),
-        'category': _categoryController.text,
-        'rating': double.parse(_ratingController.text),
-        'cooking_time': _timeController.text,
-        'image_url': _imageController.text,
-        'ingredients': _ingredientsController.text,
-        'description': _descriptionController.text,
-        'created_at': DateTime.now().toIso8601String(),
-      };
-
-      widget.onSave(newItem);
-      Navigator.pop(context);
+      try {
+        String? imageUrl = _currentFoodImageUrl;
+        if (_selectedFoodImage != null) {
+          imageUrl = await _foodImageService.uploadFoodImage(
+            widget.restaurantId,
+            widget.item?['menu_id'] ??
+                'temp_${DateTime.now().millisecondsSinceEpoch}',
+            _selectedFoodImage!,
+          );
+        }
+        final newItem = {
+          if (widget.item != null) 'menu_id': widget.item!['menu_id'],
+          'restaurant_id': widget.restaurantId,
+          'name': _nameController.text,
+          'price': double.parse(_priceController.text),
+          'category': _categoryController.text,
+          'rating': double.parse(_ratingController.text),
+          'cooking_time': _timeController.text,
+          'image_url': imageUrl,
+          'ingredients': _ingredientsController.text,
+          'description': _descriptionController.text,
+          'created_at': DateTime.now().toIso8601String(),
+        };
+        widget.onSave(newItem);
+        Navigator.pop(context);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
     }
   }
 }

@@ -1,74 +1,88 @@
 import 'package:flutter/material.dart';
-import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:provider/provider.dart';
-import 'package:tapeats/presentation/screens/user_side/favourite_page.dart';
-import 'package:tapeats/presentation/screens/user_side/menu_page.dart';
-import 'package:tapeats/presentation/screens/user_side/home_page.dart';
-import 'package:tapeats/presentation/screens/user_side/profile_page.dart';
 import 'package:tapeats/presentation/state_management/navbar_state.dart';
+import 'package:tapeats/presentation/widgets/footer_widget.dart';
 
-class MainScreen extends StatelessWidget {
-  MainScreen({super.key});
+class MainScreen extends StatefulWidget {
+  final Widget? body;
+  final String? title;
+  final List<Widget>? actions;
+  final bool showLeading;
 
-  final List<Widget> _pages = [
-    const HomePage(),
-    const MenuPage(),
-    const FavouritesPage(),
-    const ProfilePage(),
-  ];
+  const MainScreen({
+    super.key,
+    this.body,
+    this.title,
+    this.actions,
+    this.showLeading = true,
+  });
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
+  // Pre-initialized page instances to avoid recreation
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Handle system back button
+  @override
+  Future<bool> didPopRoute() async {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+      return true;
+    }
+    return false;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<NavbarState>(
-      builder: (context, navbarState, _) {
-        return Scaffold(
-          backgroundColor: const Color(0xFF151611),
-          extendBody: true,
-          body: IndexedStack(
-            index: navbarState.currentIndex,
-            children: _pages,
-          ),
-          bottomNavigationBar: CurvedNavigationBar(
-            index: navbarState.currentIndex,
-            backgroundColor: Colors.transparent,
-            color: const Color(0xFF222222),
-            buttonBackgroundColor: const Color(0xFF222222),
-            height: 60,
-            animationDuration: const Duration(milliseconds: 300),
-            animationCurve: Curves.easeInOut,
-            items: <Widget>[
-              Icon(Iconsax.home, 
-                color: navbarState.currentIndex == 0 
-                  ? const Color(0xFFD0F0C0) 
-                  : const Color(0xFFEEEFEF),
-                size: 28
-              ),
-              Icon(Iconsax.book_saved,
-                color: navbarState.currentIndex == 1 
-                  ? const Color(0xFFD0F0C0) 
-                  : const Color(0xFFEEEFEF),
-                size: 28
-              ),
-              Icon(Iconsax.heart,
-                color: navbarState.currentIndex == 2 
-                  ? const Color(0xFFD0F0C0) 
-                  : const Color(0xFFEEEFEF),
-                size: 28
-              ),
-              Icon(Iconsax.user,
-                color: navbarState.currentIndex == 3 
-                  ? const Color(0xFFD0F0C0) 
-                  : const Color(0xFFEEEFEF),
-                size: 28
-              ),
-            ],
-            onTap: (index) {
-              navbarState.updateIndex(index);
-            },
+      builder: (context, navbarState, child) {
+        // If custom body is provided, use it
+        if (widget.body != null) {
+          return Scaffold(
+            body: widget.body,
+            extendBody: true,
+            bottomNavigationBar: const DynamicFooter(),
+          );
+        }
+
+        // IMPORTANT: Use NavbarState's pages, not _rolePages
+        final pages = navbarState.getPagesForRole();
+        final index = navbarState.selectedIndex;
+        final safeIndex = index < pages.length ? index : 0;
+
+        // Debug
+        print(
+            'MainScreen: pages=${pages.length}, index=$safeIndex, role=${navbarState.userRole}');
+
+        return PopScope(
+          canPop: false,
+          onPopInvoked: (didPop) async {
+            // Back handling logic...
+          },
+          child: Scaffold(
+            body: IndexedStack(
+              index: safeIndex,
+              children: pages,
+            ),
+            extendBody: true,
+            bottomNavigationBar: const DynamicFooter(),
           ),
         );
-      }
+      },
     );
   }
 }

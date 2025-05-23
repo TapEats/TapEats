@@ -5,6 +5,8 @@ import 'package:iconsax/iconsax.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
+import 'package:tapeats/presentation/screens/user_side/notification_page.dart';
+import 'package:tapeats/services/notification_service.dart';
 import 'package:tapeats/presentation/state_management/cart_state.dart';
 import 'package:tapeats/presentation/state_management/slider_state.dart';
 import 'package:tapeats/presentation/widgets/active_orders_carousel.dart';
@@ -110,6 +112,13 @@ class _HomePageState extends State<HomePage> with RouteAware {
     );
   }
 
+  void _navigateToNotifications() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const NotificationPage()),
+    );
+  }
+
   void _onSlideToCheckout() {
     final cartState = Provider.of<CartState>(context, listen: false);
     Navigator.push(
@@ -138,6 +147,9 @@ class _HomePageState extends State<HomePage> with RouteAware {
 //         print('  Min width: ${constraints.minWidth}');
 //         print('  Min height: ${constraints.minHeight}');
 //       }
+
+    final notificationService = Provider.of<NotificationService>(context);
+
     return PopScope(
       canPop: true,
       child: Scaffold(
@@ -147,12 +159,13 @@ class _HomePageState extends State<HomePage> with RouteAware {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               HeaderWidget(
-                leftIcon: Iconsax.user,
-                onLeftButtonPressed: () {},
+                leftIcon: Iconsax.notification,
+                onLeftButtonPressed: _navigateToNotifications,
                 headingText: 'Vadodara',
                 headingIcon: Iconsax.location,
                 rightIcon: Iconsax.menu_1,
                 onRightButtonPressed: _openSideMenu,
+                notificationCount: notificationService.unreadCount,
               ),
               const SizedBox(height: 20),
               _buildFlavorAdventureSection(),
