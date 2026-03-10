@@ -25,6 +25,13 @@ class CartState extends ChangeNotifier {
     }
   }
 
+  // Clear entire cart (user action)
+  void clearCart() {
+    cartItems.clear();
+    totalItems = 0;
+    notifyListeners();
+  }
+
   // Call this only after successful checkout
   void resetCartAfterCheckout() {
     cartItems.clear();

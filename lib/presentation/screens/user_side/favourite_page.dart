@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
 import 'package:tapeats/presentation/screens/user_side/notification_page.dart';
+import 'package:tapeats/presentation/state_management/cart_state.dart';
 import 'package:tapeats/presentation/widgets/add_button.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/minus_button.dart';
@@ -21,8 +22,6 @@ class FavouritesPage extends StatefulWidget {
 
 class _FavouritesPageState extends State<FavouritesPage> with AutomaticKeepAliveClientMixin {
   final SupabaseClient supabase = Supabase.instance.client;
-  Map<String, int> cartItems = {}; // This will store item names and their quantities
-  int totalItems = 0; // Total number of items in the cart
   List<dynamic> favouriteItems = [];
   bool _isLoading = true;
 
@@ -63,32 +62,11 @@ class _FavouritesPageState extends State<FavouritesPage> with AutomaticKeepAlive
   }
 
   void _addItemToCart(String itemName) {
-    // Check if widget is still mounted
-    if (!mounted) return;
-    
-    setState(() {
-      if (cartItems.containsKey(itemName)) {
-        cartItems[itemName] = cartItems[itemName]! + 1;
-      } else {
-        cartItems[itemName] = 1;
-      }
-      totalItems += 1; // Update total items in the cart
-    });
+    Provider.of<CartState>(context, listen: false).addItem(itemName);
   }
 
   void _removeItemFromCart(String itemName) {
-    // Check if widget is still mounted
-    if (!mounted) return;
-    
-    setState(() {
-      if (cartItems.containsKey(itemName) && cartItems[itemName]! > 0) {
-        cartItems[itemName] = cartItems[itemName]! - 1;
-        totalItems -= 1;
-        if (cartItems[itemName] == 0) {
-          cartItems.remove(itemName);
-        }
-      }
-    });
+    Provider.of<CartState>(context, listen: false).removeItem(itemName);
   }
 
   void _openSideMenu() {
@@ -104,10 +82,8 @@ class _FavouritesPageState extends State<FavouritesPage> with AutomaticKeepAlive
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CartPage(
-          cartItems: cartItems,
-          totalItems: totalItems,
-        ),
+        builder: (context) => const CartPage(),
+        settings: const RouteSettings(name: '/cart'),
       ),
     );
   }
@@ -160,16 +136,21 @@ class _FavouritesPageState extends State<FavouritesPage> with AutomaticKeepAlive
             const SizedBox(height: 10),
 
             // Slider Button widget for cart
-            if (totalItems > 0)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: SliderButton(
-                  labelText: 'Cart',
-                  subText: '$totalItems items',
-                  onSlideComplete: _onSlideToCheckout,
-                  pageId: 'favourite_cart',
-                ),
-              ),
+            Consumer<CartState>(
+              builder: (context, cartState, child) {
+                return cartState.totalItems > 0
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: SliderButton(
+                          labelText: 'Cart',
+                          subText: '${cartState.totalItems} items',
+                          onSlideComplete: _onSlideToCheckout,
+                          pageId: 'favourite_cart',
+                        ),
+                      )
+                    : const SizedBox.shrink();
+              },
+            ),
             const SizedBox(height: 20),
           ],
         ),
@@ -225,37 +206,41 @@ class _FavouritesPageState extends State<FavouritesPage> with AutomaticKeepAlive
                               color: Color(0xFFEEEFEF), fontSize: 18),
                         ),
                         const SizedBox(height: 5),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '\$${item['price'].toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                  color: Color(0xFFD0F0C0), fontSize: 16),
-                            ),
-                            cartItems.containsKey(item['name']) &&
-                                    cartItems[item['name']]! > 0
-                                ? Row(
-                                    children: [
-                                      MinusButton(
-                                          onPressed: () => _removeItemFromCart(
-                                              item['name'])),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        '${cartItems[item['name']]}',
-                                        style: const TextStyle(
-                                            color: Color(0xFFD0F0C0)),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      PlusButton(
-                                          onPressed: () =>
-                                              _addItemToCart(item['name'])),
-                                    ],
-                                  )
-                                : AddButton(
-                                    onPressed: () =>
-                                        _addItemToCart(item['name'])),
-                          ],
+                        Consumer<CartState>(
+                          builder: (context, cartState, child) {
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '\$${item['price'].toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                      color: Color(0xFFD0F0C0), fontSize: 16),
+                                ),
+                                cartState.cartItems.containsKey(item['name']) &&
+                                        cartState.cartItems[item['name']]! > 0
+                                    ? Row(
+                                        children: [
+                                          MinusButton(
+                                              onPressed: () => _removeItemFromCart(
+                                                  item['name'])),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            '${cartState.cartItems[item['name']]}',
+                                            style: const TextStyle(
+                                                color: Color(0xFFD0F0C0)),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          PlusButton(
+                                              onPressed: () =>
+                                                  _addItemToCart(item['name'])),
+                                        ],
+                                      )
+                                    : AddButton(
+                                        onPressed: () =>
+                                            _addItemToCart(item['name'])),
+                              ],
+                            );
+                          },
                         ),
                         const SizedBox(height: 10),
                         _buildRatingAndTime(

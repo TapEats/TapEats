@@ -1,21 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tapeats/presentation/screens/user_side/cart_page.dart';
+import 'package:tapeats/presentation/state_management/cart_state.dart';
 import 'package:tapeats/presentation/widgets/header_widget.dart';
 import 'package:tapeats/presentation/widgets/sidemenu_overlay.dart';
 import 'package:tapeats/presentation/widgets/slider_button.dart';
 import 'package:tapeats/presentation/widgets/order_detail_widget.dart';
 
 class OrderHistoryPage extends StatefulWidget {
-  final Map<String, int> cartItems;
-  final int totalItems;
-  const OrderHistoryPage({
-    super.key,
-    required this.cartItems,
-    required this.totalItems,
-  });
+  const OrderHistoryPage({super.key});
 
   @override
   State<OrderHistoryPage> createState() => _OrderHistoryPageState();
@@ -24,15 +20,11 @@ class OrderHistoryPage extends StatefulWidget {
 class _OrderHistoryPageState extends State<OrderHistoryPage> {
   final SupabaseClient supabase = Supabase.instance.client;
   List<Map<String, dynamic>> orderHistoryItems = [];
-  Map<String, int> cartItems = {};
-  int totalItems = 0;
   String? userPhoneNumber;
 
   @override
   void initState() {
     super.initState();
-    cartItems = Map.from(widget.cartItems);
-    totalItems = widget.totalItems;
     _initializeUserData();
   }
 
@@ -114,28 +106,25 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   void _reorder(Map<String, dynamic> order) {
     final items =
         List<Map<String, dynamic>>.from(order['items'] as List<dynamic>);
+    final cartState = Provider.of<CartState>(context, listen: false);
 
     // Add items from the selected order to the cart
     for (var item in items) {
       final itemName = item['name'] as String;
-      setState(() {
-        if (cartItems.containsKey(itemName)) {
-          cartItems[itemName] = cartItems[itemName]! + item['quantity'] as int;
-        } else {
-          cartItems[itemName] = item['quantity'] as int;
-        }
-        totalItems += item['quantity'] as int;
-      });
+      final quantity = item['quantity'] as int;
+
+      // Add each item the specified number of times
+      for (int i = 0; i < quantity; i++) {
+        cartState.addItem(itemName);
+      }
     }
 
     // Redirect to the cart page after reordering
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CartPage(
-          cartItems: cartItems,
-          totalItems: totalItems,
-        ),
+        builder: (context) => const CartPage(),
+        settings: const RouteSettings(name: '/cart'),
       ),
     );
   }
@@ -189,56 +178,59 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                       },
                     ),
             ),
-            if (totalItems > 0)
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A1A),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Cart Items ($totalItems)',
-                          style: const TextStyle(
-                            color: Color(0xFFEEEFEF),
-                            fontSize: 18,
-                            fontFamily: 'Helvetica Neue',
-                          ),
+            Consumer<CartState>(
+              builder: (context, cartState, child) {
+                return cartState.totalItems > 0
+                    ? Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A1A1A),
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                        Text(
-                          '\$${_calculateTotalPrice().toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: Color(0xFFD0F0C0),
-                            fontSize: 18,
-                            fontFamily: 'Helvetica Neue',
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 15),
-                    SliderButton(
-                      labelText: 'Swipe to Cart',
-                      subText: '$totalItems items',
-                      onSlideComplete: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CartPage(
-                              cartItems: cartItems,
-                              totalItems: totalItems,
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Cart Items (${cartState.totalItems})',
+                                  style: const TextStyle(
+                                    color: Color(0xFFEEEFEF),
+                                    fontSize: 18,
+                                    fontFamily: 'Helvetica Neue',
+                                  ),
+                                ),
+                                Text(
+                                  '\$${_calculateTotalPrice(cartState.cartItems).toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    color: Color(0xFFD0F0C0),
+                                    fontSize: 18,
+                                    fontFamily: 'Helvetica Neue',
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        );
-                      },
-                      pageId: 'history_cart',
-                    ),
-                  ],
-                ),
-              ),
+                            const SizedBox(height: 15),
+                            SliderButton(
+                              labelText: 'Swipe to Cart',
+                              subText: '${cartState.totalItems} items',
+                              onSlideComplete: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const CartPage(),
+                                    settings: const RouteSettings(name: '/cart'),
+                                  ),
+                                );
+                              },
+                              pageId: 'history_cart',
+                            ),
+                          ],
+                        ),
+                      )
+                    : const SizedBox.shrink();
+              },
+            ),
             const SizedBox(height: 20),
           ],
         ),
@@ -246,7 +238,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     );
   }
 
-  double _calculateTotalPrice() {
+  double _calculateTotalPrice(Map<String, int> cartItems) {
     double total = 0;
     for (final order in orderHistoryItems) {
       final items =

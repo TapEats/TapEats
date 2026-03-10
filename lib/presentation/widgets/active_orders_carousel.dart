@@ -189,7 +189,7 @@ class _ActiveOrdersCarouselState extends State<ActiveOrdersCarousel> {
           CarouselSlider.builder(
             itemCount: activeOrders.length,
             options: CarouselOptions(
-              height: 120,
+              height: 140,
               viewportFraction: 0.93,
               enableInfiniteScroll: activeOrders.length > 1,
               enlargeCenterPage: true,
@@ -245,106 +245,117 @@ class _ActiveOrdersCarouselState extends State<ActiveOrdersCarousel> {
           width: 2,
         ),
       ),
-      padding: const EdgeInsets.all(15),
-      child: Column(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _getStatusColor(status),
-                        ),
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _getStatusColor(status),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
                         status,
                         style: const TextStyle(
-                          fontSize: 18,
+                          fontSize: 16,
                           color: Color(0xFFEEEFEF),
                           fontWeight: FontWeight.w400,
                           fontFamily: 'Helvetica Neue',
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    _getOrderSummary(items),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFFEEEFEF),
-                      fontWeight: FontWeight.w300,
                     ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _getOrderSummary(items),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFFEEEFEF),
+                    fontWeight: FontWeight.w300,
                   ),
-                  Text(
-                    _formatDateTime(orderTime),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: const Color(0xFFEEEFEF).withAlpha(179),
-                    ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _formatDateTime(orderTime),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: const Color(0xFFEEEFEF).withAlpha(179),
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '\$${totalPrice.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  color: Color(0xFFD0F0C0),
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '\$${totalPrice.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      color: Color(0xFFD0F0C0),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => StatusPage(
-                            orderId: order['order_id'],
-                          ),
-                        ),
-                      ).then((_) => _fetchActiveOrders());
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD0F0C0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+              const SizedBox(height: 4),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => StatusPage(
+                        orderId: order['order_id'],
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                     ),
-                    child: Row(
-                      children: [
-                        const Text(
-                          'View',
-                          style: TextStyle(
-                            color: Color(0xFF151611),
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Helvetica Neue',
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Image.asset(
-                          'assets/images/cookthecook.gif',
-                          width: 20,
-                          height: 20,
-                        ),
-                      ],
-                    ),
+                  ).then((_) => _fetchActiveOrders());
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD0F0C0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ],
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  minimumSize: const Size(0, 32),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'View',
+                      style: TextStyle(
+                        color: Color(0xFF151611),
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Helvetica Neue',
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Image.asset(
+                      'assets/images/cookthecook.gif',
+                      width: 18,
+                      height: 18,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

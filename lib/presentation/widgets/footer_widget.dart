@@ -172,14 +172,17 @@ class _DynamicFooterState extends State<DynamicFooter> with SingleTickerProvider
 
   void _onItemTapped(BuildContext context, int index, NavbarState navbarState) {
     if (navbarState.selectedIndex == index) return;
-    
+
     navbarState.updateIndex(index);
     print('Navigation index changed to: $index');
-    
+
+    // Pop any pushed routes (like detail pages) but stay on MainScreen
+    final navigator = Navigator.of(context);
     Future.delayed(const Duration(milliseconds: 100), () {
       if (!mounted) return;
-      while (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
+      // Only pop until we're back at the MainScreen, not all the way to login
+      if (navigator.canPop()) {
+        navigator.popUntil((route) => route.isFirst || route.settings.name == '/home');
       }
     });
   }

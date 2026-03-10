@@ -132,7 +132,7 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
       MenuItem(
         title: 'Order History',
         icon: Iconsax.calendar,
-        page: const OrderHistoryPage(cartItems: {}, totalItems: 0),
+        page: const OrderHistoryPage(),
         allowedRoles: ['customer'],
       ),
       MenuItem(
@@ -486,16 +486,17 @@ class _RoleBasedSideMenuState extends State<RoleBasedSideMenu>
       // Original code for tab pages
       await _controller.reverse();
       if (!mounted) return;
-      
+
       Navigator.of(context).pop();
-      
-      // If we're currently in a pushed route, pop back to main navigation
-      while (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
-      
+
       // Update NavbarState based on the page
       _updateNavbarState(page);
+
+      // Pop any detail pages but stay on MainScreen (don't pop all the way to login)
+      final navigator = Navigator.of(context);
+      if (navigator.canPop()) {
+        navigator.popUntil((route) => route.isFirst || route.settings.name == '/home');
+      }
     }
   }
   

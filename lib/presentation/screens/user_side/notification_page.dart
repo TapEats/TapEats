@@ -88,10 +88,12 @@ class _NotificationPageState extends State<NotificationPage> {
       });
     } catch (e) {
       // Handle errors
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error fetching notifications: $e')),
       );
     } finally {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -143,7 +145,7 @@ class _NotificationPageState extends State<NotificationPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => OrderHistoryPage(cartItems: {}, totalItems: 0),
+              builder: (context) => const OrderHistoryPage(),
             ),
           );
         }

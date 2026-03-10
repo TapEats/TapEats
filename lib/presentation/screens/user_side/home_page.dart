@@ -146,14 +146,10 @@ class _HomePageState extends State<HomePage> with RouteAware, AutomaticKeepAlive
   }
 
   void _onSlideToCheckout() {
-    final cartState = Provider.of<CartState>(context, listen: false);
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CartPage(
-          cartItems: cartState.cartItems,
-          totalItems: cartState.totalItems,
-        ),
+        builder: (context) => const CartPage(),
         settings: const RouteSettings(name: '/cart'),
       ),
     );
@@ -188,43 +184,54 @@ class _HomePageState extends State<HomePage> with RouteAware, AutomaticKeepAlive
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              HeaderWidget(
-                leftIcon: Iconsax.notification,
-                onLeftButtonPressed: _navigateToNotifications,
-                headingText: 'Vadodara',
-                headingIcon: Iconsax.location,
-                rightIcon: Iconsax.menu_1,
-                onRightButtonPressed: _openSideMenu,
-                notificationCount: notificationService.unreadCount,
-              ),
-              const SizedBox(height: 20),
-              _buildFlavorAdventureSection(),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: CustomSearchBar(
-                  controller: _searchController,
-                  hintText: 'Find your cravings',
-                  onSearch: () {
-                    // Add mounted check before updating state
-                    if (!mounted) return;
-                    setState(() {
-                      searchQuery = _searchController.text;
-                    });
-                  },
+              // Scrollable content area
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      HeaderWidget(
+                        leftIcon: Iconsax.notification,
+                        onLeftButtonPressed: _navigateToNotifications,
+                        headingText: 'Vadodara',
+                        headingIcon: Iconsax.location,
+                        rightIcon: Iconsax.menu_1,
+                        onRightButtonPressed: _openSideMenu,
+                        notificationCount: notificationService.unreadCount,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildFlavorAdventureSection(),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: CustomSearchBar(
+                          controller: _searchController,
+                          hintText: 'Find your cravings',
+                          onSearch: () {
+                            // Add mounted check before updating state
+                            if (!mounted) return;
+                            setState(() {
+                              searchQuery = _searchController.text;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildCategoryButtons(),
+                      const SizedBox(height: 10),
+                      _buildMenuItems(),
+                      const SizedBox(height: 20), // Space for bottom elements
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 10),
-              _buildCategoryButtons(),
-              const SizedBox(height: 10),
-              _buildMenuItems(),
-              const SizedBox(height: 10),
 
+              // Fixed bottom elements (Cart and Active Orders)
               Consumer<CartState>(
                 builder: (context, cartState, child) {
                   return cartState.totalItems > 0
                       ? Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                           child: SliderButton(
                             key: const ValueKey('home_cart_slider'),
                             labelText: 'Cart',
@@ -240,7 +247,7 @@ class _HomePageState extends State<HomePage> with RouteAware, AutomaticKeepAlive
               ),
 
               const ActiveOrdersCarousel(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
             ],
           ),
         ),
@@ -354,7 +361,8 @@ class _HomePageState extends State<HomePage> with RouteAware, AutomaticKeepAlive
               item['name'].toLowerCase().contains(searchQuery.toLowerCase()));
     }).toList();
 
-    return Expanded(
+    return SizedBox(
+      height: 240,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -362,88 +370,87 @@ class _HomePageState extends State<HomePage> with RouteAware, AutomaticKeepAlive
           children: filteredMenuItems.map((item) {
             return Padding(
               padding: const EdgeInsets.all(8.0),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minHeight: 210,
-                  maxHeight: 250,
+              child: Container(
+                width: 200,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Container(
-                  width: 200,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          item['image_url'],
-                          fit: BoxFit.cover,
-                          height: 100,
-                          width: double.infinity,
-                        ),
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        item['image_url'],
+                        fit: BoxFit.cover,
+                        height: 100,
+                        width: double.infinity,
                       ),
-                      const SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text(
-                          item['name'],
-                          style: const TextStyle(color: Color(0xFFEEEFEF)),
-                        ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      item['name'],
+                      style: const TextStyle(
+                        color: Color(0xFFEEEFEF),
+                        fontSize: 13,
+                        height: 1.2,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '\$${item['price'].toStringAsFixed(2)}',
-                              style: const TextStyle(color: Color(0xFFD0F0C0)),
-                            ),
-                            Consumer<CartState>(
-                              builder: (context, cartState, child) {
-                                return cartState.cartItems.containsKey(item['name']) &&
-                                        cartState.cartItems[item['name']]! > 0
-                                    ? Row(
-                                        children: [
-                                          MinusButton(
-                                            onPressed: () =>
-                                                _removeItemFromCart(item['name']),
-                                          ),
-                                          const SizedBox(width: 5),
-                                          Text(
-                                            '${cartState.cartItems[item['name']]}',
-                                            style: const TextStyle(
-                                                color: Color(0xFFD0F0C0)),
-                                          ),
-                                          const SizedBox(width: 5),
-                                          PlusButton(
-                                            onPressed: () =>
-                                                _addItemToCart(item['name']),
-                                          ),
-                                        ],
-                                      )
-                                    : AddButton(
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '\$${item['price'].toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            color: Color(0xFFD0F0C0),
+                            fontSize: 13,
+                            height: 1.2,
+                          ),
+                        ),
+                        Consumer<CartState>(
+                          builder: (context, cartState, child) {
+                            return cartState.cartItems.containsKey(item['name']) &&
+                                    cartState.cartItems[item['name']]! > 0
+                                ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      MinusButton(
+                                        onPressed: () =>
+                                            _removeItemFromCart(item['name']),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        '${cartState.cartItems[item['name']]}',
+                                        style: const TextStyle(
+                                            color: Color(0xFFD0F0C0)),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      PlusButton(
                                         onPressed: () =>
                                             _addItemToCart(item['name']),
-                                      );
-                              },
-                            ),
-                          ],
+                                      ),
+                                    ],
+                                  )
+                                : AddButton(
+                                    onPressed: () =>
+                                        _addItemToCart(item['name']),
+                                  );
+                          },
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: _buildRatingAndTime(
-                          item['rating'] ?? 0.0,
-                          item['cooking_time'] ?? '0',
-                        ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    _buildRatingAndTime(
+                      item['rating'] ?? 0.0,
+                      item['cooking_time'] ?? '0',
+                    ),
+                  ],
                 ),
               ),
             );
@@ -459,39 +466,41 @@ class _HomePageState extends State<HomePage> with RouteAware, AutomaticKeepAlive
         color: const Color(0xFF222222),
         borderRadius: BorderRadius.circular(10),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Row(
             children: [
-              const Icon(Iconsax.star, color: Color(0xFFEEEFEF), size: 16),
-              const SizedBox(width: 5),
+              const Icon(Iconsax.star, color: Color(0xFFEEEFEF), size: 14),
+              const SizedBox(width: 4),
               Text(
                 rating.toString(),
                 style: const TextStyle(
                   color: Color(0xFFEEEFEF),
                   fontFamily: 'Helvetica Neue',
-                  fontSize: 14,
+                  fontSize: 13,
+                  height: 1.0,
                 ),
               ),
             ],
           ),
           Container(
             width: 1,
-            height: 20,
+            height: 16,
             color: const Color(0xFFEEEFEF),
           ),
           Row(
             children: [
-              const Icon(Iconsax.timer, color: Color(0xFFEEEFEF), size: 16),
-              const SizedBox(width: 5),
+              const Icon(Iconsax.timer, color: Color(0xFFEEEFEF), size: 14),
+              const SizedBox(width: 4),
               Text(
                 cookingTime,
                 style: const TextStyle(
                   color: Color(0xFFEEEFEF),
                   fontFamily: 'Helvetica Neue',
-                  fontSize: 14,
+                  fontSize: 13,
+                  height: 1.0,
                 ),
               ),
             ],

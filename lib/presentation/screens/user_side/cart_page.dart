@@ -13,14 +13,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:uuid/uuid.dart';
 
 class CartPage extends StatefulWidget {
-  final Map<String, int> cartItems;
-  final int totalItems;
-
-  const CartPage({
-    super.key,
-    required this.cartItems,
-    required this.totalItems,
-  });
+  const CartPage({super.key});
 
   @override
   State<CartPage> createState() => _CartPageState();
@@ -64,10 +57,11 @@ class _CartPageState extends State<CartPage> {
   }
 
   Future<void> _fetchCartDetails() async {
+    final cartState = Provider.of<CartState>(context, listen: false);
     List<dynamic> items = [];
     double total = 0.0;
 
-    for (var item in widget.cartItems.entries) {
+    for (var item in cartState.cartItems.entries) {
       final response = await supabase
           .from('menu')
           .select('menu_id, name, price, rating, cooking_time, image_url, category')
@@ -83,6 +77,8 @@ class _CartPageState extends State<CartPage> {
       }
     }
 
+    if (!mounted) return;
+
     setState(() {
       detailedCartItems = items;
       itemTotal = total;
@@ -91,9 +87,11 @@ class _CartPageState extends State<CartPage> {
 
   void _handleCheckout() async {
     if (_isProcessingPayment) return;
-    
+
+    final cartState = Provider.of<CartState>(context, listen: false);
+
     // Validate cart
-    if (widget.cartItems.isEmpty) {
+    if (cartState.cartItems.isEmpty) {
       _showSnackBar('Cart is empty', Colors.red);
       return;
     }
@@ -133,12 +131,12 @@ class _CartPageState extends State<CartPage> {
 
       // Prepare order items
       _orderItems = [];
-      for (var entry in widget.cartItems.entries) {
+      for (var entry in cartState.cartItems.entries) {
         final menuItem = detailedCartItems.firstWhere(
           (item) => item['name'] == entry.key,
           orElse: () => null,
         );
-        
+
         if (menuItem != null) {
           _orderItems!.add({
             "menu_id": menuItem['menu_id'].toString(),
@@ -351,6 +349,81 @@ class _CartPageState extends State<CartPage> {
     _fetchCartDetails();
   }
 
+  void _showClearCartDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: const Text(
+            'Clear Cart?',
+            style: TextStyle(
+              color: Color(0xFFEEEFEF),
+              fontFamily: 'Helvetica Neue',
+              fontSize: 20,
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to remove all items from your cart?',
+            style: TextStyle(
+              color: Color(0xFF8F8F8F),
+              fontFamily: 'Helvetica Neue',
+              fontSize: 16,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Color(0xFF8F8F8F),
+                  fontFamily: 'Helvetica Neue',
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final cartState = Provider.of<CartState>(context, listen: false);
+                final sliderState = Provider.of<SliderState>(context, listen: false);
+
+                // Clear the cart
+                cartState.clearCart();
+
+                // Reset slider states
+                sliderState.resetSliderPosition('cart_checkout');
+                sliderState.resetSliderPosition('home_cart');
+
+                // Close dialog
+                Navigator.of(context).pop();
+
+                // Navigate back to previous page
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD0F0C0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'Clear',
+                style: TextStyle(
+                  color: Color(0xFF1A1A1A),
+                  fontFamily: 'Helvetica Neue',
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -388,7 +461,51 @@ class _CartPageState extends State<CartPage> {
               ),
 
             const SizedBox(height: 20),
-            
+
+            // Clear Cart Button
+            Consumer<CartState>(
+              builder: (context, cartState, child) {
+                return cartState.totalItems > 0
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            onPressed: _isProcessingPayment
+                                ? null
+                                : () => _showClearCartDialog(),
+                            icon: const Icon(
+                              Iconsax.trash,
+                              color: Color(0xFFD0F0C0),
+                              size: 18,
+                            ),
+                            label: const Text(
+                              'Clear Cart',
+                              style: TextStyle(
+                                color: Color(0xFFD0F0C0),
+                                fontSize: 14,
+                                fontFamily: 'Helvetica Neue',
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              backgroundColor: const Color(0xFF1A1A1A),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink();
+              },
+            ),
+
+            const SizedBox(height: 10),
+
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
